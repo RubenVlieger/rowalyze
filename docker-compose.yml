@@ -1,0 +1,12 @@
+services:
+  rowsplit:
+    build: .
+    ports:
+      - "8080:5000"
+    env_file: .env
+    volumes:
+      - rowsplit_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  rowsplit_data:

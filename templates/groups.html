@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}My Groups — RowSplit{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{{ url_for('index') }}" class="back-link">← Home</a>
+    <h1 class="activity-title">My Groups</h1>
+    <p class="activity-meta">Organize your rowing sessions into groups for easy comparison.</p>
+</div>
+
+<!-- Create New Group -->
+<div class="card">
+    <form action="{{ url_for('create_group') }}" method="POST" class="create-group-form">
+        <input type="text" name="name" placeholder="New group name (e.g. 4x5min pieces)" class="input-inline" required>
+        <button type="submit" class="btn btn-primary btn-sm">+ Create Group</button>
+    </form>
+</div>
+
+{% if groups %}
+<div class="groups-grid">
+    {% for g in groups %}
+    <a href="{{ url_for('group_detail', group_id=g.id) }}" class="group-card card">
+        <div class="group-card-header">
+            <h3 class="group-name">{{ g.name }}</h3>
+            <span class="group-count">{{ g.session_count }} session{{ 's' if g.session_count != 1 }}</span>
+        </div>
+        {% if g.latest_session %}
+        <p class="group-latest">Latest: {{ g.latest_session[:10] }}</p>
+        {% else %}
+        <p class="group-latest muted">No sessions yet</p>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>No groups yet.</p>
+        <p>Create a group above and save your analysis sessions to it!</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

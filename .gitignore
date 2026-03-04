@@ -1,0 +1,14 @@
+.env
+__pycache__/
+/venv
+/stream1.txt
+/stream2.txt
+/stream3.txt
+/stream4.txt
+/Afternoon_Workout.gpx
+/screenshot.png
+*.pyc
+/data/
+/check_strava.py
+.DS_Store
+~/.strava_tokens.json

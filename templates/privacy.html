@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — RowSplit{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{{ url_for('index') }}" class="back-link">← Home</a>
+    <h1 class="activity-title">Privacy Policy</h1>
+</div>
+
+<div class="card privacy-content">
+    <h2>What we collect</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Storage</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Strava athlete ID</td>
+                <td>SHA-256 hash (first 16 chars only)</td>
+                <td>Count unique users on homepage</td>
+            </tr>
+            <tr>
+                <td>Analysis sessions</td>
+                <td>Activity name, date, results in SQLite</td>
+                <td>Revisit results & organize into groups</td>
+            </tr>
+            <tr>
+                <td>Access tokens</td>
+                <td>Encrypted browser session cookie only</td>
+                <td>Strava API calls during your visit</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>What we do NOT collect</h2>
+    <ul class="privacy-list">
+        <li>❌ Your password (we use Strava OAuth)</li>
+        <li>❌ Your GPS/location data (processed in memory, not stored)</li>
+        <li>❌ Analytics cookies or tracking pixels</li>
+        <li>❌ Your email address</li>
+    </ul>
+
+    <h2>Strava OAuth</h2>
+    <p>When you click "Connect with Strava", you're redirected to Strava where you grant permission. We receive a
+        temporary token (expires in 6 hours). We never see your password. Revoke access anytime at <a
+            href="https://www.strava.com/settings/apps" target="_blank">strava.com/settings/apps</a>.</p>
+
+    <h2>🦈 Shark Mode</h2>
+    <p>The bookmarklet runs in your browser on strava.com and sends stream data (time, speed, cadence, distance) to
+        RowSplit for analysis. No credentials are transmitted.</p>
+
+    <h2>Shared links</h2>
+    <p>Shared session links are public — anyone with the link can view results without logging in. Links use random IDs
+        that cannot be guessed.</p>
+
+    <h2>Contact</h2>
+    <p>Questions? Email <a href="mailto:ruben.vlieger@ru.nl">ruben.vlieger@ru.nl</a></p>
+</div>
+{% endblock %}

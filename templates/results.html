@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{{ activity.name }} — RowSplit{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{{ url_for('index') }}" class="back-link">← New Analysis</a>
+    <h1 class="activity-title">{{ activity.name }}</h1>
+    <p class="activity-meta">
+        {{ activity.date }} · {{ activity.type }} ·
+        <a href="{{ activity.url }}" target="_blank" class="strava-link">View on Strava ↗</a>
+    </p>
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar">
+    {% if share_url %}
+    <button class="btn btn-secondary btn-sm" onclick="copyShareLink('{{ share_url }}')" id="share-btn">
+        📋 Share Link
+    </button>
+    {% endif %}
+
+    {% if is_owner is not defined or is_owner %}
+    {% if groups is defined and groups|length > 0 %}
+    <div class="save-group-dropdown">
+        <button class="btn btn-secondary btn-sm" onclick="toggleDropdown('save-dropdown')">
+            📁 Save to Group
+        </button>
+        <div class="dropdown-content hidden" id="save-dropdown">
+            {% for g in groups %}
+            <form action="{{ url_for('add_to_group', group_id=g.id) }}" method="POST" class="dropdown-form">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
+                <button type="submit" class="dropdown-item">{{ g.name }}</button>
+            </form>
+            {% endfor %}
+            <hr class="dropdown-divider">
+            <form action="{{ url_for('create_group') }}" method="POST" class="dropdown-form dropdown-form-new">
+                <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
+                <input type="text" name="name" placeholder="New group name..." class="dropdown-input" required>
+                <button type="submit" class="dropdown-item dropdown-item-new">+ Create & Add</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <form action="{{ url_for('create_group') }}" method="POST" class="inline-form">
+        <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
+        <input type="text" name="name" placeholder="New group name..." class="input-sm" required>
+        <button type="submit" class="btn btn-secondary btn-sm">📁 Create Group</button>
+    </form>
+    {% endif %}
+    {% endif %}
+</div>
+
+<!-- Summary Card -->
+<div class="card summary-card">
+    <h2 class="section-title">Summary</h2>
+    <div class="summary-grid">
+        <div class="summary-stat">
+            <span class="stat-value">{{ summary.total_time_formatted }}</span>
+            <span class="stat-label">Total Time</span>
+        </div>
+        <div class="summary-stat">
+            <span class="stat-value">{{ "{:,.0f}".format(summary.total_distance_meters) }}<small>m</small></span>
+            <span class="stat-label">Total Distance</span>
+        </div>
+        <div class="summary-stat">
+            <span class="stat-value">{{ summary.avg_split_formatted }}<small>/500m</small></span>
+            <span class="stat-label">Avg Split (moving)</span>
+        </div>
+        <div class="summary-stat">
+            <span class="stat-value">{{ summary.avg_cadence }}<small>spm</small></span>
+            <span class="stat-label">Avg Cadence</span>
+        </div>
+    </div>
+</div>
+
+<!-- Intervals -->
+<div class="card">
+    <div class="section-header">
+        <h2 class="section-title">
+            Fastest {{ num_intervals }} × {{ interval_desc }} Intervals
+        </h2>
+        {% if overall_avg %}
+        <div class="overall-avg">
+            Avg: <strong>{{ overall_avg.speed }}/500m</strong> · {{ overall_avg.cadence }} spm
+        </div>
+        {% endif %}
+    </div>
+
+    {% if results %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Start</th>
+                    <th>Duration</th>
+                    <th>Distance</th>
+                    <th>Ø Split /500m</th>
+                    <th>Ø Cadence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr class="interval-row" data-interval="{{ r.rank }}">
+                    <td><span class="rank-badge">{{ r.rank }}</span></td>
+                    <td>{{ r.start_time_formatted }}</td>
+                    <td>{{ r.duration_formatted }}</td>
+                    <td>{{ "{:,.0f}".format(r.distance_meters) }}m</td>
+                    <td class="speed-cell">{{ r.avg_speed_formatted }}</td>
+                    <td>{{ r.avg_cadence }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No intervals found matching the criteria.</p>
+        <p>Try lowering the minimum cadence or adjusting the interval duration.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Graphs -->
+{% if results and chart_data %}
+<div class="card">
+    <h2 class="section-title">Graphs</h2>
+    <div class="chart-container">
+        <h3 class="chart-label">Split (/500m)</h3>
+        <canvas id="speed-chart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3 class="chart-label">Cadence (spm)</h3>
+        <canvas id="cadence-chart"></canvas>
+    </div>
+    {% if has_heartrate %}
+    <div class="chart-container">
+        <h3 class="chart-label">Heart Rate (bpm)</h3>
+        <canvas id="heartrate-chart"></canvas>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- 500m Split Times -->
+{% if results %}
+<div class="card">
+    <h2 class="section-title">500m Split Times</h2>
+
+    {% for r in results %}
+    <div class="split-section">
+        <button class="split-toggle" data-target="splits-{{ r.rank }}">
+            <span class="split-toggle-label">
+                <span class="rank-badge rank-badge-sm">{{ r.rank }}</span>
+                Interval {{ r.rank }}
+                <span class="split-summary">{{ r.avg_speed_formatted }}/500m · {{ "{:,.0f}".format(r.distance_meters)
+                    }}m</span>
+            </span>
+            <span class="split-toggle-icon">▾</span>
+        </button>
+        <div class="split-content" id="splits-{{ r.rank }}">
+            {% if r.sub_splits %}
+            <div class="table-wrap">
+                <table class="data-table data-table-compact">
+                    <thead>
+                        <tr>
+                            <th>Segment</th>
+                            <th>Distance</th>
+                            <th>Duration</th>
+                            <th>Ø Split /500m</th>
+                            <th>Ø Cadence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in r.sub_splits %}
+                        <tr>
+                            <td>{{ s.segment_label }}</td>
+                            <td>{{ s.distance_meters }}m</td>
+                            <td>{{ s.duration_seconds }}s</td>
+                            <td class="speed-cell">{{ s.split_formatted }}</td>
+                            <td>{{ s.avg_cadence }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="muted">No 500m splits available for this interval.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Did I Do Great? -->
+<div class="card did-great-card">
+    <button class="btn btn-great" id="great-btn" onclick="didIDoGreat()">
+        Did I do great? 🤔
+    </button>
+    <div class="great-result hidden" id="great-result">
+        <div class="great-message">
+            <span class="great-emoji">🎉</span>
+            <h2>You did great!</h2>
+            <p>Keep crushing those splits! 💪🚣</p>
+        </div>
+    </div>
+</div>
+
+<!-- Re-analyze -->
+<div class="card reanalyze-card">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">← Analyze Another Activity</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const chartData = {{ chart_data | tojson }};
+    initCharts(chartData);
+</script>
+{% endblock %}

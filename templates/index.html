@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>Analyze Your Rowing</h1>
+    <p class="hero-sub">Find your fastest intervals from any Strava rowing activity with detailed 500m split breakdowns.
+    </p>
+</div>
+
+<!-- Stats Banner -->
+{% if stats %}
+<div class="stats-banner">
+    <div class="stats-banner-item">
+        <span class="stats-num">{{ stats.total_sessions }}</span>
+        <span class="stats-label">sessions analyzed</span>
+    </div>
+    <span class="stats-dot">·</span>
+    <div class="stats-banner-item">
+        <span class="stats-num">{{ stats.unique_users }}</span>
+        <span class="stats-label">unique athletes</span>
+    </div>
+</div>
+{% if stats.sessions_by_date|length > 0 %}
+<div class="card stats-chart-card">
+    <canvas id="stats-chart" height="80"></canvas>
+</div>
+{% endif %}
+{% endif %}
+
+{% if not authenticated %}
+<div class="card connect-card">
+    <div class="connect-content">
+        <h2>Get Started</h2>
+        <p>Connect your Strava account to analyze your rowing activities.</p>
+        <a href="{{ url_for('auth_strava') }}" class="btn btn-strava">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path
+                    d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+            </svg>
+            Connect with Strava
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="card form-card">
+    <form action="{{ url_for('analyze') }}" method="POST" id="analyze-form">
+        <div class="form-group">
+            <label for="activity_url">Strava Activity URL</label>
+            <input type="text" id="activity_url" name="activity_url"
+                placeholder="https://www.strava.com/activities/13788623920" required autocomplete="off">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Interval Type</label>
+                <div class="toggle-group">
+                    <label class="toggle-option">
+                        <input type="radio" name="interval_mode" value="time" checked>
+                        <span>Time-based</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="interval_mode" value="distance">
+                        <span>Distance-based</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row" id="time-fields">
+            <div class="form-group form-group-small">
+                <label for="interval_minutes">Minutes</label>
+                <input type="number" id="interval_minutes" name="interval_minutes" value="4" min="0" max="60">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="interval_seconds">Seconds</label>
+                <input type="number" id="interval_seconds" name="interval_seconds" value="50" min="0" max="59">
+            </div>
+        </div>
+
+        <div class="form-row hidden" id="distance-fields">
+            <div class="form-group">
+                <label for="interval_distance_m">Interval Distance (meters)</label>
+                <input type="number" id="interval_distance_m" name="interval_distance_m" value="2000" min="100"
+                    max="50000">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group form-group-small">
+                <label for="num_intervals">Number of Intervals</label>
+                <input type="number" id="num_intervals" name="num_intervals" value="3" min="1" max="20">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="min_cadence">Min Cadence</label>
+                <input type="number" id="min_cadence" name="min_cadence" value="24" min="0" max="100">
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary" id="analyze-btn">
+                <span class="btn-text">Analyze</span>
+                <span class="btn-loading hidden">
+                    <span class="spinner"></span> Analyzing...
+                </span>
+            </button>
+            <button type="button" class="btn btn-shark" id="shark-btn" title="Shark Mode — Analyze a friend's activity">
+                🦈 Shark
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Shark Mode Modal -->
+<div class="modal-overlay hidden" id="shark-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🦈 Shark Mode <span class="badge-experimental">experimental</span></h2>
+            <button class="modal-close" id="shark-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-desc">Analyze a friend's activity without API access. You must be logged into Strava and
+                follow this athlete.</p>
+
+            <!-- Method 1: Bookmarklet (one-click) -->
+            <div class="shark-method shark-method-primary">
+                <h3 class="shark-method-title">⚡ One-Click Method</h3>
+                <p class="shark-method-desc">Drag this button to your bookmarks bar:</p>
+                <div class="bookmarklet-container">
+                    <a class="btn btn-shark btn-bookmarklet" id="shark-bookmarklet" href="javascript:void(0);"
+                        onclick="return false;">
+                        🦈 RowSplit Shark
+                    </a>
+                    <p class="bookmarklet-hint">↑ Drag me to your bookmarks bar</p>
+                </div>
+                <ol class="shark-steps-list">
+                    <li>Drag the shark button above to your bookmarks bar</li>
+                    <li>Go to your friend's activity on Strava</li>
+                    <li>Click the bookmarklet in your bookmarks bar</li>
+                    <li>Done — it grabs the data and brings you back here!</li>
+                </ol>
+            </div>
+
+            <div class="shark-divider">
+                <span>or paste manually</span>
+            </div>
+
+            <!-- Method 2: Manual paste (fallback) -->
+            <div class="shark-method">
+                <h3 class="shark-method-title">📋 Manual Paste</h3>
+                <div class="form-group">
+                    <label for="shark-url">Strava Activity URL</label>
+                    <input type="text" id="shark-url" placeholder="https://www.strava.com/activities/...">
+                </div>
+
+                <details class="shark-help">
+                    <summary>How to get stream data from DevTools</summary>
+                    <ol class="shark-steps-list">
+                        <li>Open the activity in your browser (logged into Strava)</li>
+                        <li>Open DevTools (<kbd>F12</kbd> or <kbd>Cmd+Option+I</kbd>)</li>
+                        <li>Go to the <strong>Network</strong> tab</li>
+                        <li>Filter by "<strong>streams</strong>"</li>
+                        <li>Refresh the page</li>
+                        <li>Click on each stream request → copy the <strong>Response</strong></li>
+                        <li>Paste the JSON below</li>
+                    </ol>
+                </details>
+
+                <div class="form-group">
+                    <label for="shark-data">Stream JSON data</label>
+                    <textarea id="shark-data" rows="5"
+                        placeholder='Paste JSON here — should contain "time", "velocity_smooth", "cadence", "distance" arrays.'></textarea>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group form-group-small">
+                    <label for="shark-minutes">Minutes</label>
+                    <input type="number" id="shark-minutes" value="4" min="0" max="60">
+                </div>
+                <div class="form-group form-group-small">
+                    <label for="shark-seconds">Seconds</label>
+                    <input type="number" id="shark-seconds" value="50" min="0" max="59">
+                </div>
+                <div class="form-group form-group-small">
+                    <label for="shark-count">Intervals</label>
+                    <input type="number" id="shark-count" value="3" min="1" max="20">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="shark-submit">
+                <span class="btn-text">🦈 Analyze</span>
+                <span class="btn-loading hidden"><span class="spinner"></span> Analyzing...</span>
+            </button>
+            <div class="shark-error hidden" id="shark-error"></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="features">
+    <div class="feature">
+        <div class="feature-icon">⏱️</div>
+        <h3>Time or Distance</h3>
+        <p>Find fastest intervals by time (e.g. 4m50s) or distance (e.g. 2000m).</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>500m Splits</h3>
+        <p>Each interval broken into 500m chunks showing per-segment speed and cadence.</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">🦈</div>
+        <h3>Shark Mode</h3>
+        <p>Analyze a friend's activity data without needing their Strava credentials.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if stats and stats.sessions_by_date %}
+<script>
+    initStatsChart({{ stats.sessions_by_date | tojson }});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }} — RowSplit{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{{ url_for('groups_page') }}" class="back-link">← My Groups</a>
+    <h1 class="activity-title">{{ group.name }}</h1>
+    <div class="group-actions">
+        <form action="{{ url_for('delete_group', group_id=group.id) }}" method="POST" class="inline-form"
+            onsubmit="return confirm('Delete this group? Sessions inside won\'t be deleted.')">
+            <button type="submit" class="btn btn-danger btn-sm">🗑 Delete Group</button>
+        </form>
+    </div>
+</div>
+
+{% if sessions %}
+<div class="card">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Activity</th>
+                    <th>Intervals</th>
+                    <th>Total Distance</th>
+                    <th>Avg Split</th>
+                    <th>Avg Cadence</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sessions %}
+                <tr class="clickable-row" onclick="window.location='{{ url_for('view_results', session_id=s.id) }}'">
+                    <td>{{ s.activity_date or s.created_at[:10] }}</td>
+                    <td>
+                        {{ s.activity_name or 'Unknown' }}
+                        {% if s.is_shark %}<span class="badge-shark">🦈</span>{% endif %}
+                    </td>
+                    <td>{{ s.interval_desc }}</td>
+                    <td>{{ "{:,.0f}".format(s.total_distance|float) if s.total_distance else '-' }}m</td>
+                    <td class="speed-cell">{{ s.avg_split or '-' }}</td>
+                    <td>{{ s.avg_cadence or '-' }}</td>
+                    <td>
+                        <form action="{{ url_for('remove_from_group', group_id=group.id) }}" method="POST"
+                            onclick="event.stopPropagation()">
+                            <input type="hidden" name="session_id" value="{{ s.id }}">
+                            <button type="submit" class="btn-icon" title="Remove from group">&times;</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>No sessions in this group yet.</p>
+        <p>Analyze an activity, then use "Save to Group" to add it here.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
