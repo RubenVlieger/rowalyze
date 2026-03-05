@@ -1,6 +1,7 @@
 /* ─── Rowalyse Client-Side JavaScript ─────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
+    initDropdownNavs();
     initToggle();
     initSplitSections();
     initFormSubmit();
@@ -8,23 +9,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ─── Recent Activity Selection ─────────────────────────────────
+// ─── Direct Dropdown Selection ───────────────────────────────────
 
-function selectActivity(url) {
-    const input = document.getElementById('activity_url');
-    if (input) {
-        input.value = url;
-        input.focus();
-        // Scroll to the form smoothly
-        const form = document.getElementById('analyze-form');
-        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Brief highlight effect
-        input.style.borderColor = '#3b82f6';
-        input.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
-        setTimeout(() => {
-            input.style.borderColor = '';
-            input.style.boxShadow = '';
-        }, 1500);
+function initDropdownNavs() {
+    const pastSelect = document.getElementById('past_select');
+    if (pastSelect) {
+        pastSelect.addEventListener('change', () => {
+            if (pastSelect.value) {
+                window.location.href = pastSelect.value;
+            }
+        });
+    }
+
+    const recentSelect = document.getElementById('recent_select');
+    const urlInput = document.getElementById('activity_url');
+    if (recentSelect && urlInput) {
+        recentSelect.addEventListener('change', () => {
+            if (recentSelect.value) {
+                urlInput.value = recentSelect.value;
+
+                urlInput.focus();
+                // Brief highlight effect
+                urlInput.style.borderColor = '#3b82f6';
+                urlInput.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
+                setTimeout(() => {
+                    urlInput.style.borderColor = '';
+                    urlInput.style.boxShadow = '';
+                }, 1500);
+            }
+        });
     }
 }
 

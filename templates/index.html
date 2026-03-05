@@ -40,49 +40,38 @@
     </div>
 </div>
 {% else %}
-
-{% if past_analyses %}
-<div class="card recent-card">
-    <h2 class="section-title">Past Analyses</h2>
-    <div class="recent-list" style="margin-bottom: 10px;">
-        {% for act in past_analyses %}
-        <a href="{{ url_for('view_results', session_id=act.id) }}" class="recent-item" style="text-decoration: none;">
-            <div class="recent-info">
-                <span class="recent-name">{{ act.activity_name }}</span>
-                <span class="recent-meta">{{ act.formatted_date }} · {% if act.total_distance %}{{
-                    "{:,.0f}".format(act.total_distance) }}m{% else %}N/A{% endif %}</span>
-            </div>
-            <span class="recent-arrow">→</span>
-        </a>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-{% if recent_activities %}
-<div class="card recent-card">
-    <details>
-        <summary>
-            <h2 class="section-title" style="display:inline; margin-bottom: 0; cursor: pointer;">Recent Strava Sessions
-            </h2>
-        </summary>
-        <div class="recent-list" style="margin-top: 10px;">
-            {% for act in recent_activities %}
-            <button type="button" class="recent-item" onclick="selectActivity('{{ act.url }}')">
-                <div class="recent-info">
-                    <span class="recent-name">{{ act.name }}</span>
-                    <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
-                </div>
-                <span class="recent-arrow">→</span>
-            </button>
-            {% endfor %}
-        </div>
-    </details>
-</div>
-{% endif %}
-
 <div class="card form-card">
     <form action="{{ url_for('analyze') }}" method="POST" id="analyze-form">
+        <div class="form-row">
+            {% if past_analyses %}
+            <div class="form-group form-group-small" style="flex: 1;">
+                <label for="past_select">Quick Open: Past Analyses</label>
+                <select id="past_select" name="past_select"
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid var(--color-border); font-size: 0.95rem; font-family: Inter, sans-serif; background: var(--color-bg-light); margin-bottom: 8px;">
+                    <option value="">-- View an old session --</option>
+                    {% for act in past_analyses %}
+                    <option value="{{ url_for('view_results', session_id=act.id) }}">{{ act.activity_name }} ({{
+                        act.formatted_date }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            {% if recent_activities %}
+            <div class="form-group form-group-small" style="flex: 1;">
+                <label for="recent_select">Quick Fill: Recent Strava Sessions</label>
+                <select id="recent_select" name="recent_select"
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid var(--color-border); font-size: 0.95rem; font-family: Inter, sans-serif; background: var(--color-bg-light); margin-bottom: 8px;">
+                    <option value="">-- Fill activity URL --</option>
+                    {% for act in recent_activities %}
+                    <option value="{{ act.url }}">{{ act.name }} ({{ act.date }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+
+
         <div class="form-group">
             <label for="activity_url">Strava Activity URL</label>
             <input type="text" id="activity_url" name="activity_url"
