@@ -477,6 +477,13 @@ def shark_analyze():
     params = data.get('params', {})
     activity_info = data.get('activity', {})
 
+    # Unwrap nested {data: [...]} objects (from key_by_type=true format)
+    if isinstance(streams, dict):
+        for key in list(streams.keys()):
+            val = streams[key]
+            if isinstance(val, dict) and 'data' in val:
+                streams[key] = val['data']
+
     required = ['time', 'velocity_smooth', 'cadence', 'distance']
     missing = [k for k in required if k not in streams]
     if missing:
@@ -493,10 +500,13 @@ def shark_analyze():
     if interval_mode == 'distance' and interval_distance is None:
         interval_distance = 2000
 
-    results, chart_data, summary, overall_avg, interval_desc = _run_analysis(
-        streams, interval_mode, interval_duration, interval_distance,
-        num_intervals, min_cadence,
-    )
+    try:
+        results, chart_data, summary, overall_avg, interval_desc = _run_analysis(
+            streams, interval_mode, interval_duration, interval_distance,
+            num_intervals, min_cadence,
+        )
+    except Exception as e:
+        return jsonify({'error': f'Analysis failed: {e}'}), 500
 
     activity_data = {
         'id': activity_info.get('id', 'shark'),
@@ -549,11 +559,19 @@ def shark_receive():
 
     # Parse streams (handle both list-of-objects and dict formats)
     if isinstance(streams, list):
+        # Format: [{"type": "time", "data": [...]}, ...]
         parsed = {}
         for s in streams:
             if isinstance(s, dict) and 'type' in s and 'data' in s:
                 parsed[s['type']] = s['data']
         streams = parsed
+    elif isinstance(streams, dict):
+        # Format from key_by_type=true: {"time": {"data": [...], ...}, ...}
+        # Unwrap nested {data: [...]} objects into plain arrays
+        for key in list(streams.keys()):
+            val = streams[key]
+            if isinstance(val, dict) and 'data' in val:
+                streams[key] = val['data']
 
     required = ['time', 'velocity_smooth', 'cadence', 'distance']
     missing = [k for k in required if k not in streams]
@@ -566,9 +584,13 @@ def shark_receive():
     num_intervals = 3
     min_cadence = 24
 
-    results, chart_data, summary, overall_avg, interval_desc = _run_analysis(
-        streams, 'time', interval_duration, None, num_intervals, min_cadence,
-    )
+    try:
+        results, chart_data, summary, overall_avg, interval_desc = _run_analysis(
+            streams, 'time', interval_duration, None, num_intervals, min_cadence,
+        )
+    except Exception as e:
+        flash(f'Analysis failed: {e}', 'error')
+        return redirect(url_for('index'))
 
     # Extract activity ID from URL
     activity_id = 'shark'

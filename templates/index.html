@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="hero">
-    <h1>Analyze Your Rowing</h1>
-    <p class="hero-sub">Find your fastest intervals from any Strava rowing activity with detailed 500m split breakdowns.
+    <h1>Analyze your rowing 🫵🫵🫵</h1>
+    <p class="hero-sub">Find your fastest intervals from any Strava rowing activity with detailed 500m split breakdowns, just like rp3portal.
     </p>
 </div>
 
@@ -11,13 +11,15 @@
 {% if stats %}
 <div class="stats-banner">
     <div class="stats-banner-item">
+        <span class="stats-label">so far</span>
         <span class="stats-num">{{ stats.total_sessions }}</span>
         <span class="stats-label">sessions analyzed</span>
     </div>
     <span class="stats-dot">·</span>
     <div class="stats-banner-item">
+        <span class="stats-label">so far</span>
         <span class="stats-num">{{ stats.unique_users }}</span>
-        <span class="stats-label">unique athletes</span>
+        <span class="stats-label">athletes use this tool!</span>
     </div>
 </div>
 {% if stats.sessions_by_date|length > 0 %}
@@ -47,7 +49,7 @@
         <div class="form-group">
             <label for="activity_url">Strava Activity URL</label>
             <input type="text" id="activity_url" name="activity_url"
-                placeholder="https://www.strava.com/activities/13788623920" required autocomplete="off">
+                placeholder="https://www.strava.com/activities/xxxxxxxx" required autocomplete="off">
         </div>
 
         <div class="form-row">
@@ -91,19 +93,19 @@
                 <input type="number" id="num_intervals" name="num_intervals" value="3" min="1" max="20">
             </div>
             <div class="form-group form-group-small">
-                <label for="min_cadence">Min Cadence</label>
+                <label for="min_cadence">Min average cadence of interval (useful when there is a lot of wind) </label>
                 <input type="number" id="min_cadence" name="min_cadence" value="24" min="0" max="100">
             </div>
         </div>
 
         <div class="btn-row">
-            <button type="submit" class="btn btn-primary" id="analyze-btn">
-                <span class="btn-text">Analyze</span>
+            <button type="submit" class="btn btn-primary" id="analyse-btn">
+                <span class="btn-text">Analyse</span>
                 <span class="btn-loading hidden">
                     <span class="spinner"></span> Analyzing...
                 </span>
             </button>
-            <button type="button" class="btn btn-shark" id="shark-btn" title="Shark Mode — Analyze a friend's activity">
+            <button type="button" class="btn btn-shark" id="shark-btn" title="Shark Mode — Analyse a foe's activity">
                 🦈 Shark
             </button>
         </div>
@@ -118,7 +120,7 @@
             <button class="modal-close" id="shark-close">&times;</button>
         </div>
         <div class="modal-body">
-            <p class="modal-desc">Analyze a friend's activity without API access. You must be logged into Strava and
+            <p class="modal-desc">Analyse a friend's activity without API access. You must be logged into Strava and
                 follow this athlete.</p>
 
             <!-- Method 1: Bookmarklet (one-click) -->
@@ -201,7 +203,7 @@
     <div class="feature">
         <div class="feature-icon">⏱️</div>
         <h3>Time or Distance</h3>
-        <p>Find fastest intervals by time (e.g. 4m50s) or distance (e.g. 2000m).</p>
+        <p>Find fastest intervals by time (e.g. 4x 5min) or distance (e.g. 1x 2000m).</p>
     </div>
     <div class="feature">
         <div class="feature-icon">📊</div>
@@ -211,7 +213,7 @@
     <div class="feature">
         <div class="feature-icon">🦈</div>
         <h3>Shark Mode</h3>
-        <p>Analyze a friend's activity data without needing their Strava credentials.</p>
+        <p>Analyse a foe's activity data without needing their Strava credentials.</p>
     </div>
 </div>
 {% endblock %}

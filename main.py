@@ -6,7 +6,7 @@ Usage:
     python main.py <strava_url_or_activity_id> [options]
 
 Examples:
-    python main.py https://www.strava.com/activities/13788623920
+    python main.py https://www.strava.com/activities/xxxxxxxx
     python main.py 13788623920 --interval 300 --count 4 --min-cadence 20
 """
 
@@ -33,9 +33,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py https://www.strava.com/activities/13788623920
+  python main.py https://www.strava.com/activities/xxxxxxxx
   python main.py 13788623920 --interval 300 --count 4
-  python main.py https://www.strava.com/activities/13788623920 -i 290 -n 3 -c 24
+  python main.py https://www.strava.com/activities/xxxxxxxx -i 290 -n 3 -c 24
         """,
     )
     parser.add_argument(
