@@ -13,7 +13,6 @@ services:
     image: nginx:latest
     ports:
       - "8080:80"
-      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # This links your new certificates into the container
