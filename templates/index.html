@@ -41,37 +41,56 @@
 </div>
 {% else %}
 
+{% if past_analyses %}
+<div class="card recent-card" style="padding-top: 16px; padding-bottom: 16px;">
+    <button class="dropdown-header"
+        onclick="document.getElementById('past-list').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('up');"
+        style="width:100%; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; padding:8px 0;">
+        <h2 class="section-title" style="margin:0;">Past Analyses</h2>
+        <span class="chevron"
+            style="font-size:1.2rem; transition:transform 0.2s; color:var(--color-text-muted);">▾</span>
+    </button>
+    <div id="past-list" class="recent-list hidden" style="margin-top: 16px;">
+        {% for act in past_analyses %}
+        <button type="button" class="recent-item"
+            onclick='openAnalyzeModal("{{ act.activity_url }}", {{ act.activity_name | tojson }})'>
+            <div class="recent-info">
+                <span class="recent-name">{{ act.activity_name }}</span>
+                <span class="recent-meta">{{ act.formatted_date }} · {% if act.total_distance %}{{
+                    "{:,.0f}".format(act.total_distance) }}m{% else %}N/A{% endif %}</span>
+            </div>
+            <span class="recent-arrow">→</span>
+        </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
+{% if recent_activities %}
+<div class="card recent-card" style="padding-top: 16px; padding-bottom: 16px;">
+    <button class="dropdown-header"
+        onclick="document.getElementById('recent-list').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('up');"
+        style="width:100%; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; padding:8px 0;">
+        <h2 class="section-title" style="margin:0;">Recent Strava Sessions</h2>
+        <span class="chevron"
+            style="font-size:1.2rem; transition:transform 0.2s; color:var(--color-text-muted);">▾</span>
+    </button>
+    <div id="recent-list" class="recent-list hidden" style="margin-top: 16px;">
+        {% for act in recent_activities %}
+        <button type="button" class="recent-item" onclick='openAnalyzeModal("{{ act.url }}", {{ act.name | tojson }})'>
+            <div class="recent-info">
+                <span class="recent-name">{{ act.name }}</span>
+                <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
+            </div>
+            <span class="recent-arrow">→</span>
+        </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <div class="card form-card">
     <form action="{{ url_for('analyze') }}" method="POST" id="analyze-form">
-        <div class="form-row">
-            {% if past_analyses %}
-            <div class="form-group form-group-small">
-                <label for="past_select">Quick Open: Past Analyses</label>
-                <select id="past_select" name="past_select">
-                    <option value="">-- View an old session --</option>
-                    {% for act in past_analyses %}
-                    <option value="{{ url_for('view_results', session_id=act.id) }}">{{ act.activity_name }} ({{
-                        act.formatted_date }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
-            {% if recent_activities %}
-            <div class="form-group form-group-small">
-                <label for="recent_select">Quick Fill: Recent Strava Sessions</label>
-                <select id="recent_select" name="recent_select">
-                    <option value="">-- Fill activity URL --</option>
-                    {% for act in recent_activities %}
-                    <option value="{{ act.url }}">{{ act.name }} ({{ act.date }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-        </div>
-
         <div class="form-group">
             <label for="activity_url">Strava Activity URL</label>
             <input type="text" id="activity_url" name="activity_url"
@@ -218,6 +237,86 @@
         <div class="feature-icon">🦈</div>
         <h3>Shark Mode</h3>
         <p>Analyse a foe's activity data without needing their Strava credentials.</p>
+    </div>
+</div>
+
+<!-- Re-analyze Modal (Same as Shark Modal conceptually) -->
+<div class="modal-overlay hidden" id="reanalyze-modal"
+    style="z-index: 10000; display:flex; align-items:center; justify-content:center;">
+    <div
+        style="background:#fff;padding:24px;border-radius:14px;width:340px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px;">
+                <img src="/static/logo.png" style="height:24px;width:auto;"> Rowalyse
+            </div>
+            <button type="button" onclick="closeAnalyzeModal()"
+                style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999;padding:0 4px;">&times;</button>
+        </div>
+
+        <form action="/analyze" method="POST" id="popup-analyze-form" onsubmit="return submitAnalyzeModal()">
+            <input type="hidden" name="activity_url" id="popup-activity-url">
+
+            <div style="margin-bottom:12px;">
+                <div style="font-size:.8rem;font-weight:500;color:#666;margin-bottom:4px;">Interval Type</div>
+                <div style="display:flex;border:1.5px solid var(--color-border);border-radius:8px;overflow:hidden;">
+                    <label style="flex:1;text-align:center;cursor:pointer;">
+                        <input type="radio" name="interval_mode" value="time" checked style="display:none;"
+                            onchange="updatePopupMode()">
+                        <span id="popup_rmt"
+                            style="display:block;padding:8px;font-size:.85rem;font-weight:500;background:var(--color-primary);color:#fff;">Time</span>
+                    </label>
+                    <label style="flex:1;text-align:center;cursor:pointer;">
+                        <input type="radio" name="interval_mode" value="distance" style="display:none;"
+                            onchange="updatePopupMode()">
+                        <span id="popup_rmd"
+                            style="display:block;padding:8px;font-size:.85rem;font-weight:500;color:var(--color-text-light);border-left:1px solid var(--color-border);">Distance</span>
+                    </label>
+                    <label style="flex:1;text-align:center;cursor:pointer;">
+                        <input type="radio" name="interval_mode" value="full" style="display:none;"
+                            onchange="updatePopupMode()">
+                        <span id="popup_rmf"
+                            style="display:block;padding:8px;font-size:.85rem;font-weight:500;color:var(--color-text-light);border-left:1px solid var(--color-border);">Full</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="popup_rtf" style="display:flex;gap:8px;margin-bottom:12px;">
+                <div style="flex:1;">
+                    <div style="font-size:.75rem;color:var(--color-text-light);margin-bottom:2px;">Minutes</div>
+                    <input name="interval_minutes" type="number" value="4" min="0" max="60"
+                        style="width:100%;padding:7px;border:1.5px solid var(--color-border);border-radius:6px;font-size:.9rem;background:var(--color-white);color:var(--color-text);">
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:.75rem;color:var(--color-text-light);margin-bottom:2px;">Seconds</div>
+                    <input name="interval_seconds" type="number" value="50" min="0" max="59"
+                        style="width:100%;padding:7px;border:1.5px solid var(--color-border);border-radius:6px;font-size:.9rem;background:var(--color-white);color:var(--color-text);">
+                </div>
+            </div>
+
+            <div id="popup_rdf" style="display:none;margin-bottom:12px;">
+                <div style="font-size:.75rem;color:var(--color-text-light);margin-bottom:2px;">Distance (meters)</div>
+                <input name="interval_distance_m" type="number" value="2000" min="100"
+                    style="width:100%;padding:7px;border:1.5px solid var(--color-border);border-radius:6px;font-size:.9rem;background:var(--color-white);color:var(--color-text);">
+            </div>
+
+            <div id="popup_rcf" style="display:flex;gap:8px;margin-bottom:16px;">
+                <div style="flex:1;">
+                    <div style="font-size:.75rem;color:var(--color-text-light);margin-bottom:2px;">Intervals</div>
+                    <input name="num_intervals" type="number" value="3" min="1" max="20"
+                        style="width:100%;padding:7px;border:1.5px solid var(--color-border);border-radius:6px;font-size:.9rem;background:var(--color-white);color:var(--color-text);">
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:.75rem;color:var(--color-text-light);margin-bottom:2px;">Min Cadence</div>
+                    <input name="min_cadence" type="number" value="24" min="0"
+                        style="width:100%;padding:7px;border:1.5px solid var(--color-border);border-radius:6px;font-size:.9rem;background:var(--color-white);color:var(--color-text);">
+                </div>
+            </div>
+
+            <button type="submit" id="popup_rgo"
+                style="width:100%;padding:11px;background:var(--color-shark);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:0.2s;">
+                🦈 Analyse
+            </button>
+        </form>
     </div>
 </div>
 {% endblock %}

@@ -1,7 +1,6 @@
 /* ─── Rowalyse Client-Side JavaScript ─────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
-    initDropdownNavs();
     initToggle();
     initSplitSections();
     initFormSubmit();
@@ -9,35 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ─── Direct Dropdown Selection ───────────────────────────────────
+// ─── Recent Activity Selection ─────────────────────────────────
 
-function initDropdownNavs() {
-    const pastSelect = document.getElementById('past_select');
-    if (pastSelect) {
-        pastSelect.addEventListener('change', () => {
-            if (pastSelect.value) {
-                window.location.href = pastSelect.value;
-            }
-        });
-    }
-
-    const recentSelect = document.getElementById('recent_select');
-    const urlInput = document.getElementById('activity_url');
-    if (recentSelect && urlInput) {
-        recentSelect.addEventListener('change', () => {
-            if (recentSelect.value) {
-                urlInput.value = recentSelect.value;
-
-                urlInput.focus();
-                // Brief highlight effect
-                urlInput.style.borderColor = '#3b82f6';
-                urlInput.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
-                setTimeout(() => {
-                    urlInput.style.borderColor = '';
-                    urlInput.style.boxShadow = '';
-                }, 1500);
-            }
-        });
+function selectActivity(url) {
+    const input = document.getElementById('activity_url');
+    if (input) {
+        input.value = url;
+        input.focus();
+        // Scroll to the form smoothly
+        const form = document.getElementById('analyze-form');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Brief highlight effect
+        input.style.borderColor = '#3b82f6';
+        input.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
+        setTimeout(() => {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+        }, 1500);
     }
 }
 
@@ -821,3 +808,70 @@ function didIDoGreat() {
     btn.classList.add('hidden');
     result.classList.remove('hidden');
 }
+
+// ─── Reanalyze Modal (Homepage) ────────────────────────────────
+
+function openAnalyzeModal(url, title) {
+    const modal = document.getElementById('reanalyze-modal');
+    const inputUrl = document.getElementById('popup-activity-url');
+    if (!modal || !inputUrl) return;
+
+    inputUrl.value = url;
+    modal.classList.remove('hidden');
+}
+
+function closeAnalyzeModal() {
+    const modal = document.getElementById('reanalyze-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function updatePopupMode() {
+    const form = document.getElementById('popup-analyze-form');
+    if (!form) return;
+    const mode = form.querySelector('input[name="interval_mode"]:checked').value;
+
+    const timeFields = document.getElementById('popup_rtf');
+    const distFields = document.getElementById('popup_rdf');
+    const countFields = document.getElementById('popup_rcf');
+    const labelT = document.getElementById('popup_rmt');
+    const labelD = document.getElementById('popup_rmd');
+    const labelF = document.getElementById('popup_rmf');
+
+    const isTime = mode === 'time';
+    const isDist = mode === 'distance';
+    const isFull = mode === 'full';
+
+    timeFields.style.display = isTime ? 'flex' : 'none';
+    distFields.style.display = isDist ? 'block' : 'none';
+    countFields.style.display = isFull ? 'none' : 'flex';
+
+    labelT.style.background = isTime ? 'var(--color-primary)' : 'transparent';
+    labelT.style.color = isTime ? '#fff' : 'var(--color-text-light)';
+
+    labelD.style.background = isDist ? 'var(--color-primary)' : 'transparent';
+    labelD.style.color = isDist ? '#fff' : 'var(--color-text-light)';
+
+    labelF.style.background = isFull ? 'var(--color-primary)' : 'transparent';
+    labelF.style.color = isFull ? '#fff' : 'var(--color-text-light)';
+}
+
+function submitAnalyzeModal() {
+    const btn = document.getElementById('popup_rgo');
+    if (btn) {
+        btn.innerHTML = '<span style="display:inline-block;border:2px solid #ffffff33;border-top-color:#fff;border-radius:50%;width:14px;height:14px;animation:spin 1s linear infinite;"></span> Analyzing...';
+        setTimeout(() => { btn.disabled = true; btn.style.opacity = '0.8'; }, 10);
+    }
+    return true; // allow form to submit
+}
+
+// Close popup on outside click
+document.addEventListener('DOMContentLoaded', () => {
+    const analyzeModal = document.getElementById('reanalyze-modal');
+    if (analyzeModal) {
+        analyzeModal.addEventListener('click', (e) => {
+            if (e.target === analyzeModal) {
+                closeAnalyzeModal();
+            }
+        });
+    }
+});
