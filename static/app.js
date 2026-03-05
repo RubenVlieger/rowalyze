@@ -286,6 +286,133 @@ function createHeartrateChart(ctx, chartData) {
 }
 
 
+// ─── Wind Map (Windfinder-style) ───────────────────────────────
+
+function initWindMap(speedKn, directionDeg, lat, lng) {
+    const container = document.getElementById('wind-map');
+    if (!container || typeof L === 'undefined') return;
+
+    const map = L.map(container, {
+        center: [lat, lng],
+        zoom: 14,
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+    });
+
+    // Muted blue-tinted tile layer (similar to Windfinder's style)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    // Blue overlay for Windfinder atmosphere
+    const overlay = L.rectangle(map.getBounds().pad(1), {
+        color: 'transparent',
+        fillColor: '#3b5a8a',
+        fillOpacity: 0.35,
+    }).addTo(map);
+
+    // Windfinder-style color scale (kn thresholds)
+    function windColor(kn) {
+        if (kn <= 1) return '#c8e6ff';
+        if (kn <= 3) return '#96c8f0';
+        if (kn <= 7) return '#64b4e6';
+        if (kn <= 11) return '#3c9edc';
+        if (kn <= 15) return '#28c83c';
+        if (kn <= 19) return '#1eaa2d';
+        if (kn <= 23) return '#ffd700';
+        if (kn <= 27) return '#ffa500';
+        if (kn <= 31) return '#ff6600';
+        if (kn <= 35) return '#ff3300';
+        if (kn <= 39) return '#e60000';
+        if (kn <= 43) return '#cc00cc';
+        if (kn <= 47) return '#9900cc';
+        if (kn <= 51) return '#6600cc';
+        return '#330066';
+    }
+
+    // Canvas overlay for wind arrows
+    const WindCanvas = L.Layer.extend({
+        onAdd(map) {
+            this._map = map;
+            const canvas = L.DomUtil.create('canvas', 'wind-canvas');
+            const size = map.getSize();
+            canvas.width = size.x;
+            canvas.height = size.y;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.pointerEvents = 'none';
+            map.getPanes().overlayPane.appendChild(canvas);
+            this._canvas = canvas;
+            this._draw();
+        },
+        onRemove() {
+            if (this._canvas) this._canvas.remove();
+        },
+        _draw() {
+            const ctx = this._canvas.getContext('2d');
+            const w = this._canvas.width;
+            const h = this._canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const color = windColor(speedKn);
+            // Wind direction in meteorological convention:
+            // directionDeg = where wind comes FROM.
+            // Arrow should point in the direction wind is going TO.
+            const rad = ((directionDeg + 180) % 360) * Math.PI / 180;
+
+            const spacing = 48;
+            const arrowLen = 18;
+            const headLen = 6;
+
+            for (let x = spacing / 2; x < w; x += spacing) {
+                for (let y = spacing / 2; y < h; y += spacing) {
+                    const ex = x + Math.sin(rad) * arrowLen;
+                    const ey = y - Math.cos(rad) * arrowLen;
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(ex, ey);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Arrowhead
+                    const angle = Math.atan2(ey - y, ex - x);
+                    ctx.beginPath();
+                    ctx.moveTo(ex, ey);
+                    ctx.lineTo(
+                        ex - headLen * Math.cos(angle - Math.PI / 6),
+                        ey - headLen * Math.sin(angle - Math.PI / 6)
+                    );
+                    ctx.moveTo(ex, ey);
+                    ctx.lineTo(
+                        ex - headLen * Math.cos(angle + Math.PI / 6),
+                        ey - headLen * Math.sin(angle + Math.PI / 6)
+                    );
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            // Speed label
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.fillRect(w - 70, h - 28, 62, 22);
+            ctx.fillStyle = color;
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.fillText(speedKn + ' kn', w - 64, h - 12);
+        },
+    });
+
+    new WindCanvas().addTo(map);
+}
+
+
 // ─── Stats Chart (Homepage) ────────────────────────────────────
 
 function initStatsChart(data) {

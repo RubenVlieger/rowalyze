@@ -1384,7 +1384,28 @@ body {
 /* ─── Wind Card ─────────────────────────────────────────────────── */
 
 .wind-card {
-    padding: 16px 24px;
+    padding: 24px;
+}
+
+.wind-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.wind-map-container {
+    width: 280px;
+    height: 220px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.wind-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
 }
 
 .wind-content {
@@ -1392,6 +1413,16 @@ body {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .wind-layout {
+        flex-direction: column;
+    }
+
+    .wind-map-container {
+        width: 100%;
+    }
 }
 
 .wind-icon {

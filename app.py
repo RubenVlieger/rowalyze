@@ -172,6 +172,7 @@ def _run_analysis(streams, interval_mode, interval_duration, interval_distance,
             points.append(point)
         chart_data.append({
             'label': f'Interval {r.rank}',
+            'start_time_seconds': r.start_time_seconds,
             'points': points,
         })
 
@@ -397,9 +398,13 @@ def view_results(session_id):
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
 
-    # Sort results by start time (chronological)
+    # Sort results and chart_data by start time (chronological)
     if sess.get('results'):
         sess['results'].sort(key=lambda r: r.get('start_time_seconds', 0))
+    if sess.get('chart_data'):
+        sess['chart_data'].sort(key=lambda c: c.get('start_time_seconds', 0))
+        for i, c in enumerate(sess['chart_data'], 1):
+            c['label'] = f'Interval {i}'
 
     # Activity ID for Strava embed
     activity_id = sess['activity'].get('id', '')
@@ -450,9 +455,13 @@ def share_results(session_id):
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
 
-    # Sort results by start time (chronological)
+    # Sort results and chart_data by start time (chronological)
     if sess.get('results'):
         sess['results'].sort(key=lambda r: r.get('start_time_seconds', 0))
+    if sess.get('chart_data'):
+        sess['chart_data'].sort(key=lambda c: c.get('start_time_seconds', 0))
+        for i, c in enumerate(sess['chart_data'], 1):
+            c['label'] = f'Interval {i}'
 
     activity_id = sess['activity'].get('id', '')
 

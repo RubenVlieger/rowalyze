@@ -160,15 +160,23 @@
 <!-- Wind Data (below graphs) -->
 {% if wind %}
 <div class="card wind-card">
-    <div class="wind-content">
-        <span class="wind-icon">💨</span>
-        <div class="wind-details">
-            <span class="wind-value">{{ wind.speed_kn }} kn</span>
-            <span class="wind-direction">{{ wind.direction_label }} ({{ wind.direction_deg }}°)</span>
+    <h2 class="section-title">💨 Wind Conditions</h2>
+    <div class="wind-layout">
+        <div class="wind-map-container" id="wind-map"></div>
+        <div class="wind-info">
+            <div class="wind-details">
+                <span class="wind-value">{{ wind.speed_kn }} kn</span>
+                <span class="wind-direction">{{ wind.direction_label }} ({{ wind.direction_deg }}°)</span>
+            </div>
+            <span class="wind-disclaimer">Wind data for Nijmegen</span>
         </div>
-        <span class="wind-disclaimer">Wind data for Nijmegen</span>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        initWindMap({{ wind.speed_kn }}, {{ wind.direction_deg }}, 51.855965, 5.858915);
+    });
+</script>
 {% endif %}
 
 <!-- 500m Split Times -->
