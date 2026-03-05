@@ -61,18 +61,23 @@
 
 {% if recent_activities %}
 <div class="card recent-card">
-    <h2 class="section-title">Recent Strava Sessions</h2>
-    <div class="recent-list">
-        {% for act in recent_activities %}
-        <button type="button" class="recent-item" onclick="selectActivity('{{ act.url }}')">
-            <div class="recent-info">
-                <span class="recent-name">{{ act.name }}</span>
-                <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
-            </div>
-            <span class="recent-arrow">→</span>
-        </button>
-        {% endfor %}
-    </div>
+    <details>
+        <summary>
+            <h2 class="section-title" style="display:inline; margin-bottom: 0; cursor: pointer;">Recent Strava Sessions
+            </h2>
+        </summary>
+        <div class="recent-list" style="margin-top: 10px;">
+            {% for act in recent_activities %}
+            <button type="button" class="recent-item" onclick="selectActivity('{{ act.url }}')">
+                <div class="recent-info">
+                    <span class="recent-name">{{ act.name }}</span>
+                    <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
+                </div>
+                <span class="recent-arrow">→</span>
+            </button>
+            {% endfor %}
+        </div>
+    </details>
 </div>
 {% endif %}
 
@@ -90,11 +95,15 @@
                 <div class="toggle-group">
                     <label class="toggle-option">
                         <input type="radio" name="interval_mode" value="time" checked>
-                        <span>Time-based</span>
+                        <span id="label-time">Time</span>
                     </label>
                     <label class="toggle-option">
                         <input type="radio" name="interval_mode" value="distance">
-                        <span>Distance-based</span>
+                        <span id="label-distance">Distance</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="interval_mode" value="full">
+                        <span id="label-full">Full Session</span>
                     </label>
                 </div>
             </div>
@@ -119,7 +128,7 @@
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" id="count-fields">
             <div class="form-group form-group-small">
                 <label for="num_intervals">Number of Intervals</label>
                 <input type="number" id="num_intervals" name="num_intervals" value="3" min="1" max="20">

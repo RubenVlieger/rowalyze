@@ -328,6 +328,54 @@ def find_fastest_intervals(
     return results
 
 
+def compute_full_session(
+    time: list[float],
+    velocity_smooth: list[float],
+    cadence: list[float],
+    distance: list[float],
+) -> list[IntervalResult]:
+    """
+    Return a single IntervalResult encompassing the entire activity.
+    """
+    n = len(time)
+    if n < 2:
+        return []
+
+    start_idx = 0
+    end_idx = n - 1
+
+    dt = time[end_idx] - time[start_idx]
+    dist = distance[end_idx] - distance[start_idx]
+    
+    if dt <= 0 or dist <= 0:
+        return []
+
+    avg_vel = dist / dt
+    avg_cad = _weighted_avg_cadence(cadence, time, start_idx, end_idx)
+    sec_per_500m = 500.0 / avg_vel if avg_vel > 0 else float('inf')
+
+    sub_splits = compute_500m_splits(time, cadence, distance, start_idx, end_idx)
+
+    result = IntervalResult(
+        rank=1,
+        start_idx=start_idx,
+        end_idx=end_idx,
+        start_time_seconds=time[start_idx],
+        end_time_seconds=time[end_idx],
+        duration_seconds=dt,
+        start_time_formatted=format_time(time[start_idx]),
+        duration_formatted=format_duration(dt),
+        avg_speed_sec_per_500m=sec_per_500m,
+        avg_speed_formatted=format_speed(sec_per_500m),
+        avg_cadence=avg_cad,
+        distance_meters=dist,
+        avg_velocity_ms=avg_vel,
+        sub_splits=sub_splits,
+    )
+
+    return [result]
+
+
 def get_activity_summary(time, distance, velocity_smooth, cadence):
     """Compute overall activity summary stats."""
     total_time = time[-1] - time[0] if len(time) > 1 else 0

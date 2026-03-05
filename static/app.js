@@ -35,17 +35,24 @@ function initToggle() {
     const radios = document.querySelectorAll('input[name="interval_mode"]');
     const timeFields = document.getElementById('time-fields');
     const distFields = document.getElementById('distance-fields');
+    const countFields = document.getElementById('count-fields');
 
-    if (!radios.length || !timeFields || !distFields) return;
+    if (!radios.length || !timeFields || !distFields || !countFields) return;
 
     radios.forEach(radio => {
         radio.addEventListener('change', () => {
             if (radio.value === 'time') {
                 timeFields.classList.remove('hidden');
                 distFields.classList.add('hidden');
-            } else {
+                countFields.classList.remove('hidden');
+            } else if (radio.value === 'distance') {
                 timeFields.classList.add('hidden');
                 distFields.classList.remove('hidden');
+                countFields.classList.remove('hidden');
+            } else if (radio.value === 'full') {
+                timeFields.classList.add('hidden');
+                distFields.classList.add('hidden');
+                countFields.classList.add('hidden');
             }
         });
     });
@@ -600,8 +607,9 @@ function initSharkModal() {
             `<div style="margin-bottom:12px;">` +
             `<div style="font-size:.8rem;font-weight:500;color:#666;margin-bottom:4px;">Interval Type</div>` +
             `<div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">` +
-            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="time" checked style="display:none;"><span id="_rmt" style="display:block;padding:8px;font-size:.85rem;font-weight:500;background:#3b82f6;color:#fff;">Time</span></label>` +
-            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="distance" style="display:none;"><span id="_rmd" style="display:block;padding:8px;font-size:.85rem;font-weight:500;color:#666;border-left:1px solid #e5e7eb;">Distance</span></label>` +
+            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="time" checked style="display:none;"><span id="_rmt" style="display:block;padding:8px;font-size:.8rem;font-weight:500;background:#3b82f6;color:#fff;">Time</span></label>` +
+            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="distance" style="display:none;"><span id="_rmd" style="display:block;padding:8px;font-size:.8rem;font-weight:500;color:#666;border-left:1px solid #e5e7eb;">Distance</span></label>` +
+            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="full" style="display:none;"><span id="_rmf" style="display:block;padding:8px;font-size:.8rem;font-weight:500;color:#666;border-left:1px solid #e5e7eb;">Full</span></label>` +
             `</div></div>` +
             // Time fields
             `<div id="_rtf" style="display:flex;gap:8px;margin-bottom:12px;">` +
@@ -614,7 +622,7 @@ function initSharkModal() {
             `<input id="_rds" type="number" value="2000" min="100" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;">` +
             `</div>` +
             // Count + cadence
-            `<div style="display:flex;gap:8px;margin-bottom:16px;">` +
+            `<div id="_rcf" style="display:flex;gap:8px;margin-bottom:16px;">` +
             `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Intervals</div><input id="_rcn" type="number" value="3" min="1" max="20" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
             `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Min Cadence</div><input id="_rcd" type="number" value="24" min="0" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
             `</div>` +
@@ -623,13 +631,17 @@ function initSharkModal() {
             `</div>` +
             `';` +
             `document.body.appendChild(o);` +
-            // Toggle time/distance
+            // Toggle time/distance/full
             `document.querySelectorAll('input[name=_rm]').forEach(function(r){r.onchange=function(){` +
             `var t=r.value==='time';` +
+            `var d=r.value==='distance';` +
+            `var f=r.value==='full';` +
             `document.getElementById('_rtf').style.display=t?'flex':'none';` +
-            `document.getElementById('_rdf').style.display=t?'none':'block';` +
-            `document.getElementById('_rmt').style.cssText='display:block;padding:8px;font-size:.85rem;font-weight:500;'+(t?'background:#3b82f6;color:#fff;':'color:#666;');` +
-            `document.getElementById('_rmd').style.cssText='display:block;padding:8px;font-size:.85rem;font-weight:500;border-left:1px solid #e5e7eb;'+(t?'color:#666;':'background:#3b82f6;color:#fff;');` +
+            `document.getElementById('_rdf').style.display=d?'block':'none';` +
+            `document.getElementById('_rcf').style.display=f?'none':'flex';` +
+            `document.getElementById('_rmt').style.cssText='display:block;padding:8px;font-size:.8rem;font-weight:500;'+(t?'background:#3b82f6;color:#fff;':'color:#666;');` +
+            `document.getElementById('_rmd').style.cssText='display:block;padding:8px;font-size:.8rem;font-weight:500;border-left:1px solid #e5e7eb;'+(d?'background:#3b82f6;color:#fff;':'color:#666;');` +
+            `document.getElementById('_rmf').style.cssText='display:block;padding:8px;font-size:.8rem;font-weight:500;border-left:1px solid #e5e7eb;'+(f?'background:#3b82f6;color:#fff;':'color:#666;');` +
             `};});` +
             // Close
             `document.getElementById('_rc').onclick=function(){o.remove();};` +

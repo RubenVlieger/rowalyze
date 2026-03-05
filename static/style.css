@@ -220,6 +220,39 @@ body {
     margin-bottom: 24px;
 }
 
+/* ─── Dropdowns / Collapsible Details ───────────────────────────── */
+
+details {
+    width: 100%;
+}
+
+details>summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 24px;
+}
+
+details>summary::-webkit-details-marker {
+    display: none;
+}
+
+details>summary::after {
+    content: '▾';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+    transition: transform var(--transition);
+}
+
+details[open]>summary::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
 /* ─── Buttons ───────────────────────────────────────────────────── */
 
 .btn {

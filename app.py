@@ -19,7 +19,7 @@ from flask import (
 )
 from dotenv import load_dotenv
 
-from analyze import find_fastest_intervals, get_activity_summary, format_speed
+from analyze import find_fastest_intervals, get_activity_summary, format_speed, compute_full_session
 from strava_client import (
     parse_activity_url,
     get_auth_url,
@@ -127,16 +127,25 @@ def _cache_key(activity_id, params):
 def _run_analysis(streams, interval_mode, interval_duration, interval_distance,
                   num_intervals, min_cadence):
     """Run the analysis engine and return (results, chart_data, summary, overall_avg, interval_desc)."""
-    results = find_fastest_intervals(
-        time=streams['time'],
-        velocity_smooth=streams['velocity_smooth'],
-        cadence=streams['cadence'],
-        distance=streams['distance'],
-        interval_duration=interval_duration,
-        interval_distance=interval_distance,
-        num_intervals=num_intervals,
-        min_cadence=min_cadence,
-    )
+    
+    if interval_mode == 'full':
+        results = compute_full_session(
+            time=streams['time'],
+            velocity_smooth=streams['velocity_smooth'],
+            cadence=streams['cadence'],
+            distance=streams['distance'],
+        )
+    else:
+        results = find_fastest_intervals(
+            time=streams['time'],
+            velocity_smooth=streams['velocity_smooth'],
+            cadence=streams['cadence'],
+            distance=streams['distance'],
+            interval_duration=interval_duration,
+            interval_distance=interval_distance,
+            num_intervals=num_intervals,
+            min_cadence=min_cadence,
+        )
 
     summary = get_activity_summary(
         streams['time'], streams['distance'],
@@ -144,7 +153,9 @@ def _run_analysis(streams, interval_mode, interval_duration, interval_distance,
     )
 
     # Build interval description
-    if interval_mode == 'time':
+    if interval_mode == 'full':
+        interval_desc = "Full Session"
+    elif interval_mode == 'time':
         mins = int(interval_duration) // 60
         secs = int(interval_duration) % 60
         interval_desc = f"{mins}m{secs:02d}s" if secs else f"{mins}m"
