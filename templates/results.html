@@ -117,7 +117,7 @@
             <tbody>
                 {% for r in results %}
                 <tr class="interval-row" data-interval="{{ r.rank }}">
-                    <td><span class="rank-badge">{{ r.rank }}</span></td>
+                    <td><span class="rank-badge">{{ loop.index }}</span></td>
                     <td>{{ r.start_time_formatted }}</td>
                     <td>{{ r.duration_formatted }}</td>
                     <td>{{ "{:,.0f}".format(r.distance_meters) }}m</td>
@@ -180,8 +180,8 @@
     <div class="split-section">
         <button class="split-toggle" data-target="splits-{{ r.rank }}">
             <span class="split-toggle-label">
-                <span class="rank-badge rank-badge-sm">{{ r.rank }}</span>
-                Interval {{ r.rank }}
+                <span class="rank-badge rank-badge-sm">{{ loop.index }}</span>
+                Interval {{ loop.index }}
                 <span class="split-summary">{{ r.avg_speed_formatted }}/500m · {{ "{:,.0f}".format(r.distance_meters)
                     }}m</span>
             </span>
