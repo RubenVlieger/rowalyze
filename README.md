@@ -5,6 +5,7 @@
 Ever wanted to see your on-the-water splits exactly like you do on the erg (or rp3portal)? Rowalyse takes your Strava activity, finds your fastest intervals, and breaks them down into neat 500m sub-splits with speed, cadence, and heart rate data. 
 
 Built for the rowing community to stop guessing and start knowing exactly where the watts are going.
+<img src="resources/homepage.png" width="400">
 
 ## Features
 
