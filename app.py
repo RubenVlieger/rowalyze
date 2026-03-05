@@ -62,7 +62,7 @@ def _wind_direction_label(deg: float) -> str:
 def _fetch_wind_data(date_str: str) -> dict | None:
     """
     Fetch wind data for Nijmegen on a given date from Open-Meteo.
-    Returns {'speed_kmh': float, 'direction_deg': float, 'direction_label': str} or None.
+    Returns {'speed_kn': float, 'direction_deg': float, 'direction_label': str} or None.
     """
     if not date_str or len(date_str) < 10:
         return None
@@ -87,7 +87,7 @@ def _fetch_wind_data(date_str: str) -> dict | None:
         direction = daily.get('wind_direction_10m_dominant', [None])[0]
         if speed is not None and direction is not None:
             return {
-                'speed_kmh': round(speed, 1),
+                'speed_kn': round(speed * 0.539957, 1),
                 'direction_deg': round(direction),
                 'direction_label': _wind_direction_label(direction),
             }
@@ -341,7 +341,7 @@ def analyze():
         chart_data=chart_data,
         summary=summary,
         activity=activity_data,
-        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_speed_kmh=wind['speed_kn'] if wind else None,
         wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 
@@ -374,7 +374,7 @@ def view_results(session_id):
     wind = None
     if sess.get('wind_speed_kmh') is not None:
         wind = {
-            'speed_kmh': sess['wind_speed_kmh'],
+            'speed_kn': sess['wind_speed_kmh'],
             'direction_deg': sess['wind_direction_deg'],
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
@@ -421,7 +421,7 @@ def share_results(session_id):
     wind = None
     if sess.get('wind_speed_kmh') is not None:
         wind = {
-            'speed_kmh': sess['wind_speed_kmh'],
+            'speed_kn': sess['wind_speed_kmh'],
             'direction_deg': sess['wind_direction_deg'],
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
@@ -626,7 +626,7 @@ def shark_analyze():
         summary=summary,
         activity=activity_data,
         is_shark=True,
-        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_speed_kmh=wind['speed_kn'] if wind else None,
         wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 
@@ -745,7 +745,7 @@ def shark_receive():
         summary=summary,
         activity=activity_data,
         is_shark=True,
-        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_speed_kmh=wind['speed_kn'] if wind else None,
         wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 

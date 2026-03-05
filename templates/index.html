@@ -124,70 +124,23 @@
             <p class="modal-desc">Analyse a friend's activity without API access. You must be logged into Strava and
                 be able to view this athlete's activity.</p>
 
-            <!-- Interval Settings -->
-            <div class="shark-method">
-                <h3 class="shark-method-title">⚙️ Interval Settings</h3>
-                <div class="form-group">
-                    <label>Interval Type</label>
-                    <div class="toggle-group">
-                        <label class="toggle-option">
-                            <input type="radio" name="shark_interval_mode" value="time" checked>
-                            <span>Time-based</span>
-                        </label>
-                        <label class="toggle-option">
-                            <input type="radio" name="shark_interval_mode" value="distance">
-                            <span>Distance-based</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-row" id="shark-time-fields">
-                    <div class="form-group form-group-small">
-                        <label for="shark-minutes">Minutes</label>
-                        <input type="number" id="shark-minutes" value="4" min="0" max="60">
-                    </div>
-                    <div class="form-group form-group-small">
-                        <label for="shark-seconds">Seconds</label>
-                        <input type="number" id="shark-seconds" value="50" min="0" max="59">
-                    </div>
-                </div>
-
-                <div class="form-row hidden" id="shark-distance-fields">
-                    <div class="form-group">
-                        <label for="shark-distance">Distance (meters)</label>
-                        <input type="number" id="shark-distance" value="2000" min="100" max="50000">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group form-group-small">
-                        <label for="shark-count">Intervals</label>
-                        <input type="number" id="shark-count" value="3" min="1" max="20">
-                    </div>
-                    <div class="form-group form-group-small">
-                        <label for="shark-cadence">Min Cadence</label>
-                        <input type="number" id="shark-cadence" value="24" min="0" max="100">
-                    </div>
-                </div>
-            </div>
-
             <!-- Bookmarklet -->
             <div class="shark-method shark-method-primary">
                 <h3 class="shark-method-title">⚡ One-Click Bookmarklet</h3>
-                <p class="shark-method-desc">Drag this button to your bookmarks bar, then click it on any Strava
-                    activity page:</p>
+                <p class="shark-method-desc">Drag this button to your bookmarks bar — it's a one-time setup:</p>
                 <div class="bookmarklet-container">
                     <a class="btn btn-shark btn-bookmarklet" id="shark-bookmarklet" href="javascript:void(0);"
                         onclick="return false;">
-                        🦈 Shark
+                        🦈 Rowalyse
                     </a>
                     <p class="bookmarklet-hint">↑ Drag me to your bookmarks bar</p>
                 </div>
                 <ol class="shark-steps-list">
-                    <li>Configure interval settings above</li>
-                    <li>Drag the shark button to your bookmarks bar</li>
-                    <li>Go to your friend's activity on Strava</li>
-                    <li>Click the bookmarklet — it grabs the data and brings you back here!</li>
+                    <li>Drag the <strong>🦈 Rowalyse</strong> button to your bookmarks bar (once)</li>
+                    <li>Go to any Strava activity page</li>
+                    <li>Click the bookmark — a settings popup will appear</li>
+                    <li>Choose your interval type, duration, and count</li>
+                    <li>Press Analyse — results appear on Rowalyse!</li>
                 </ol>
             </div>
 

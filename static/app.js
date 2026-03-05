@@ -345,69 +345,90 @@ function initSharkModal() {
 
     if (!btn || !modal) return;
 
-    // Interval mode toggle
-    const sharkModeRadios = document.querySelectorAll('input[name="shark_interval_mode"]');
-    const sharkTimeFields = document.getElementById('shark-time-fields');
-    const sharkDistFields = document.getElementById('shark-distance-fields');
-
-    sharkModeRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (radio.value === 'time') {
-                sharkTimeFields.classList.remove('hidden');
-                sharkDistFields.classList.add('hidden');
-            } else {
-                sharkTimeFields.classList.add('hidden');
-                sharkDistFields.classList.remove('hidden');
-            }
-            updateBookmarklet();
-        });
-    });
-
-    // Update bookmarklet when any param changes
-    const paramInputs = ['shark-minutes', 'shark-seconds', 'shark-count',
-        'shark-cadence', 'shark-distance'];
-    paramInputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', updateBookmarklet);
-    });
-
-    function updateBookmarklet() {
-        if (!bookmarklet) return;
+    // Generate self-contained bookmarklet that shows its own config dialog on Strava
+    if (bookmarklet) {
         const serverUrl = window.location.origin;
-        const mode = document.querySelector('input[name="shark_interval_mode"]:checked')?.value || 'time';
-        const minutes = document.getElementById('shark-minutes')?.value || '4';
-        const seconds = document.getElementById('shark-seconds')?.value || '50';
-        const count = document.getElementById('shark-count')?.value || '3';
-        const cadence = document.getElementById('shark-cadence')?.value || '24';
-        const distance = document.getElementById('shark-distance')?.value || '2000';
 
+        // Build the bookmarklet script that creates an in-page config dialog
         const bmCode = `javascript:void(function(){` +
             `if(!location.href.match(/strava\\.com\\/activities\\/(\\d+)/)){alert('Open a Strava activity page first!');return;}` +
             `var id=location.href.match(/\\/activities\\/(\\d+)/)[1];` +
-            `var title=document.title||'Shark Activity';` +
+            `var title=document.title||'Activity';` +
+            // Create overlay
+            `var o=document.createElement('div');` +
+            `o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;';` +
+            // Build dialog HTML
+            `o.innerHTML='` +
+            `<div style="background:#fff;padding:24px;border-radius:14px;width:340px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.2);">` +
+            `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">` +
+            `<div style="font-size:1.15rem;font-weight:700;">🦈 Rowalyse</div>` +
+            `<button id="_rc" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999;padding:0 4px;">×</button>` +
+            `</div>` +
+            // Interval type
+            `<div style="margin-bottom:12px;">` +
+            `<div style="font-size:.8rem;font-weight:500;color:#666;margin-bottom:4px;">Interval Type</div>` +
+            `<div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">` +
+            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="time" checked style="display:none;"><span id="_rmt" style="display:block;padding:8px;font-size:.85rem;font-weight:500;background:#3b82f6;color:#fff;">Time</span></label>` +
+            `<label style="flex:1;text-align:center;cursor:pointer;"><input type="radio" name="_rm" value="distance" style="display:none;"><span id="_rmd" style="display:block;padding:8px;font-size:.85rem;font-weight:500;color:#666;border-left:1px solid #e5e7eb;">Distance</span></label>` +
+            `</div></div>` +
+            // Time fields
+            `<div id="_rtf" style="display:flex;gap:8px;margin-bottom:12px;">` +
+            `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Minutes</div><input id="_rmn" type="number" value="4" min="0" max="60" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
+            `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Seconds</div><input id="_rsc" type="number" value="50" min="0" max="59" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
+            `</div>` +
+            // Distance field
+            `<div id="_rdf" style="display:none;margin-bottom:12px;">` +
+            `<div style="font-size:.75rem;color:#888;margin-bottom:2px;">Distance (meters)</div>` +
+            `<input id="_rds" type="number" value="2000" min="100" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;">` +
+            `</div>` +
+            // Count + cadence
+            `<div style="display:flex;gap:8px;margin-bottom:16px;">` +
+            `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Intervals</div><input id="_rcn" type="number" value="3" min="1" max="20" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
+            `<div style="flex:1;"><div style="font-size:.75rem;color:#888;margin-bottom:2px;">Min Cadence</div><input id="_rcd" type="number" value="24" min="0" style="width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.9rem;"></div>` +
+            `</div>` +
+            // Analyse button
+            `<button id="_rgo" style="width:100%;padding:11px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;">🦈 Analyse</button>` +
+            `</div>` +
+            `';` +
+            `document.body.appendChild(o);` +
+            // Toggle time/distance
+            `document.querySelectorAll('input[name=_rm]').forEach(function(r){r.onchange=function(){` +
+            `var t=r.value==='time';` +
+            `document.getElementById('_rtf').style.display=t?'flex':'none';` +
+            `document.getElementById('_rdf').style.display=t?'none':'block';` +
+            `document.getElementById('_rmt').style.cssText='display:block;padding:8px;font-size:.85rem;font-weight:500;'+(t?'background:#3b82f6;color:#fff;':'color:#666;');` +
+            `document.getElementById('_rmd').style.cssText='display:block;padding:8px;font-size:.85rem;font-weight:500;border-left:1px solid #e5e7eb;'+(t?'color:#666;':'background:#3b82f6;color:#fff;');` +
+            `};});` +
+            // Close
+            `document.getElementById('_rc').onclick=function(){o.remove();};` +
+            `o.onclick=function(e){if(e.target===o)o.remove();};` +
+            // Analyse
+            `document.getElementById('_rgo').onclick=function(){` +
+            `var btn=document.getElementById('_rgo');` +
+            `btn.textContent='Fetching...';btn.disabled=true;` +
+            `var mode=document.querySelector('input[name=_rm]:checked').value;` +
             `var types='time,velocity_smooth,cadence,distance,heartrate';` +
-            `var overlay=document.createElement('div');` +
-            `overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';` +
-            `overlay.innerHTML='<div style="background:white;padding:32px;border-radius:12px;text-align:center;font-family:Inter,sans-serif;"><div style="font-size:2rem;">🦈</div><div style="margin-top:8px;font-size:1rem;">Fetching streams...</div></div>';` +
-            `document.body.appendChild(overlay);` +
             `fetch('/api/v3/activities/'+id+'/streams?keys='+types+'&key_by_type=true',{credentials:'include'})` +
             `.then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})` +
             `.then(function(data){` +
             `var form=document.createElement('form');` +
             `form.method='POST';form.action='${serverUrl}/shark/receive';` +
             `var fields={streams:JSON.stringify(data),activity_url:location.href,activity_name:title,` +
-            `interval_mode:'${mode}',interval_minutes:'${minutes}',interval_seconds:'${seconds}',` +
-            `interval_distance:'${distance}',num_intervals:'${count}',min_cadence:'${cadence}'};` +
+            `interval_mode:mode,` +
+            `interval_minutes:document.getElementById('_rmn').value,` +
+            `interval_seconds:document.getElementById('_rsc').value,` +
+            `interval_distance:document.getElementById('_rds').value,` +
+            `num_intervals:document.getElementById('_rcn').value,` +
+            `min_cadence:document.getElementById('_rcd').value};` +
             `for(var k in fields){var inp=document.createElement('input');inp.type='hidden';inp.name=k;inp.value=fields[k];form.appendChild(inp);}` +
             `document.body.appendChild(form);form.submit();` +
             `})` +
-            `.catch(function(e){overlay.remove();alert('Shark failed: '+e.message+'\\n\\nMake sure you are logged into Strava and can see this activity.');})` +
+            `.catch(function(e){btn.textContent='🦈 Analyse';btn.disabled=false;alert('Failed: '+e.message+'\\n\\nMake sure you are logged into Strava and can see this activity.');});` +
+            `};` +
             `}())`;
+
         bookmarklet.href = bmCode;
     }
-
-    // Initial generation
-    updateBookmarklet();
 
     btn.addEventListener('click', (e) => {
         e.preventDefault();
