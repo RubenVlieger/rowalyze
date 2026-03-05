@@ -43,22 +43,28 @@
 
 {% if recent_activities %}
 <div class="card recent-card" style="padding-top: 16px; padding-bottom: 16px;">
-    <h2 class="section-title" style="margin-left: 16px;">Past Activities</h2>
-    <div id="recent-list" class="recent-list" style="margin-top: 16px;">
-        {% for act in recent_activities %}
-        <button type="button" class="recent-item"
-            onclick="openAnalyzeModal('{{ act.url }}', '{{ act.name | replace('\'', '\\\'') | replace('\"', ' &quot;')
-            }}')">
-            <div class="recent-info">
-                <span class="recent-name">{{ act.name }}</span>
-                <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
-            </div>
-            <span class="recent-arrow">→</span>
-        </button>
-        {% endfor %}
-    </div>
+    <!-- Wrap in a <details> tag. It starts closed by default -->
+    <details>
+        <!-- The <summary> tag acts as the clickable title -->
+        <summary class="section-title" style="margin-left: 16px; margin-bottom: 0;">Past Activities</summary>
+        
+        <div id="recent-list" class="recent-list" style="margin-top: 16px;">
+            {% for act in recent_activities %}
+            <button type="button" class="recent-item"
+                onclick="openAnalyzeModal('{{ act.url }}', '{{ act.name | replace('\'', '\\\'') | replace('\"', ' &quot;')
+                }}')">
+                <div class="recent-info">
+                    <span class="recent-name">{{ act.name }}</span>
+                    <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
+                </div>
+                <span class="recent-arrow">→</span>
+            </button>
+            {% endfor %}
+        </div>
+    </details>
 </div>
 {% endif %}
+
 
 <div class="card form-card">
     <form action="{{ url_for('analyze') }}" method="POST" id="analyze-form">
@@ -207,7 +213,7 @@
     <div class="feature">
         <div class="feature-icon">🦈</div>
         <h3>Shark Mode</h3>
-        <p>Analyse a foe's activity data without needing their Strava credentials.</p>
+        <p>Analyse a foe's activity data with a magical algorithm.</p>
     </div>
 </div>
 
