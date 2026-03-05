@@ -562,12 +562,12 @@ function initStatsChart(data) {
 // ─── Shark Mode ────────────────────────────────────────────────
 
 function initSharkModal() {
-    const btn = document.getElementById('shark-btn');
+    const triggers = document.querySelectorAll('.shark-btn-trigger');
     const modal = document.getElementById('shark-modal');
     const close = document.getElementById('shark-close');
     const bookmarklet = document.getElementById('shark-bookmarklet');
 
-    if (!btn || !modal) return;
+    if (!modal) return;
 
     // Detect mobile and toggle visibility
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -674,9 +674,11 @@ function initSharkModal() {
         bookmarklet.href = bmCode;
     }
 
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        modal.classList.remove('hidden');
+    triggers.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.remove('hidden');
+        });
     });
 
     close.addEventListener('click', () => {

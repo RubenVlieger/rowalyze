@@ -30,13 +30,18 @@
     <div class="connect-content">
         <h2>Get Started</h2>
         <p>Connect your Strava account to analyze your rowing activities.</p>
-        <a href="{{ url_for('auth_strava') }}" class="btn btn-strava">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path
-                    d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
-            </svg>
-            Connect with Strava
-        </a>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px;">
+            <a href="{{ url_for('auth_strava') }}" class="btn btn-strava">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path
+                        d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+                </svg>
+                Connect with Strava
+            </a>
+            <button type="button" class="btn btn-shark shark-btn-trigger">
+                🦈 Shark Mode
+            </button>
+        </div>
     </div>
 </div>
 {% else %}
@@ -47,12 +52,12 @@
     <details>
         <!-- The <summary> tag acts as the clickable title -->
         <summary class="section-title" style="margin-left: 16px; margin-bottom: 0;">Past Activities</summary>
-        
+
         <div id="recent-list" class="recent-list" style="margin-top: 16px;">
             {% for act in recent_activities %}
             <button type="button" class="recent-item"
-                onclick="openAnalyzeModal('{{ act.url }}', '{{ act.name | replace('\'', '\\\'') | replace('\"', ' &quot;')
-                }}')">
+                onclick="openAnalyzeModal('{{ act.url }}', '{{ act.name | replace('\'', '\\\'') | replace('\"', '
+                &quot;') }}')">
                 <div class="recent-info">
                     <span class="recent-name">{{ act.name }}</span>
                     <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
@@ -131,11 +136,39 @@
                     <span class="spinner"></span> Analyzing...
                 </span>
             </button>
-            <button type="button" class="btn btn-shark" id="shark-btn" title="Shark Mode — Analyse a foe's activity">
+            <button type="button" class="btn btn-shark shark-btn-trigger" id="shark-btn"
+                title="Shark Mode — Analyse a foe's activity">
                 🦈 Shark
             </button>
         </div>
     </form>
+</div>
+
+{% endif %}
+
+{% if stats and stats.sessions_by_date|length > 0 %}
+<div class="card stats-chart-card">
+    <h3 class="section-title" style="margin-bottom: 12px;">📊 Sessions per day</h3>
+    <canvas id="stats-chart" height="80"></canvas>
+</div>
+{% endif %}
+
+<div class="features">
+    <div class="feature">
+        <div class="feature-icon">⏱️</div>
+        <h3>Time or Distance</h3>
+        <p>Find fastest intervals by time (e.g. 4x 5min) or distance (e.g. 1x 2000m).</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>500m Splits</h3>
+        <p>Each interval broken into 500m chunks showing per-segment speed and cadence.</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">🦈</div>
+        <h3>Shark Mode</h3>
+        <p>Analyse a foe's activity data with a magical algorithm.</p>
+    </div>
 </div>
 
 <!-- Shark Mode Modal -->
@@ -188,32 +221,6 @@
 
             <div class="shark-error hidden" id="shark-error"></div>
         </div>
-    </div>
-</div>
-{% endif %}
-
-{% if stats and stats.sessions_by_date|length > 0 %}
-<div class="card stats-chart-card">
-    <h3 class="section-title" style="margin-bottom: 12px;">📊 Sessions per day</h3>
-    <canvas id="stats-chart" height="80"></canvas>
-</div>
-{% endif %}
-
-<div class="features">
-    <div class="feature">
-        <div class="feature-icon">⏱️</div>
-        <h3>Time or Distance</h3>
-        <p>Find fastest intervals by time (e.g. 4x 5min) or distance (e.g. 1x 2000m).</p>
-    </div>
-    <div class="feature">
-        <div class="feature-icon">📊</div>
-        <h3>500m Splits</h3>
-        <p>Each interval broken into 500m chunks showing per-segment speed and cadence.</p>
-    </div>
-    <div class="feature">
-        <div class="feature-icon">🦈</div>
-        <h3>Shark Mode</h3>
-        <p>Analyse a foe's activity data with a magical algorithm.</p>
     </div>
 </div>
 
