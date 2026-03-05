@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ group.name }} — RowSplit{% endblock %}
+{% block title %}{{ group.name }} — Rowalyse{% endblock %}
 
 {% block content %}
 <div class="results-header">
@@ -23,9 +23,9 @@
                     <th>Date</th>
                     <th>Activity</th>
                     <th>Intervals</th>
-                    <th>Total Distance</th>
-                    <th>Avg Split</th>
-                    <th>Avg Cadence</th>
+                    <th>Ø Interval Split</th>
+                    <th>Ø Interval Cadence</th>
+                    <th>Wind</th>
                     <th></th>
                 </tr>
             </thead>
@@ -38,9 +38,17 @@
                         {% if s.is_shark %}<span class="badge-shark">🦈</span>{% endif %}
                     </td>
                     <td>{{ s.interval_desc }}</td>
-                    <td>{{ "{:,.0f}".format(s.total_distance|float) if s.total_distance else '-' }}m</td>
-                    <td class="speed-cell">{{ s.avg_split or '-' }}</td>
-                    <td>{{ s.avg_cadence or '-' }}</td>
+                    <td class="speed-cell">{{ s.interval_avg_split }}<small>/500m</small></td>
+                    <td>{{ s.interval_avg_cadence }} <small>spm</small></td>
+                    <td>
+                        {% if s.wind_speed_kmh is not none %}
+                        <span class="wind-badge" title="Wind in Nijmegen">
+                            💨 {{ s.wind_speed_kmh }} km/h
+                        </span>
+                        {% else %}
+                        <span class="muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <form action="{{ url_for('remove_from_group', group_id=group.id) }}" method="POST"
                             onclick="event.stopPropagation()">
@@ -53,6 +61,7 @@
             </tbody>
         </table>
     </div>
+    <p class="wind-note muted">💨 Wind data is for Nijmegen (Waal region).</p>
 </div>
 {% else %}
 <div class="card">

@@ -1277,6 +1277,76 @@ body {
     font-size: 0.875rem;
 }
 
+/* ─── Wind Card ─────────────────────────────────────────────────── */
+
+.wind-card {
+    padding: 16px 24px;
+}
+
+.wind-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.wind-icon {
+    font-size: 1.5rem;
+}
+
+.wind-details {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.wind-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.wind-direction {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+}
+
+.wind-disclaimer {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.wind-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+    white-space: nowrap;
+}
+
+.wind-note {
+    margin-top: 12px;
+    text-align: right;
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* ─── Strava Map Embed ──────────────────────────────────────────── */
+
+.strava-embed-container {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    min-height: 200px;
+}
+
+.strava-embed-container iframe {
+    border: none;
+    width: 100%;
+}
+
 /* ─── Share toast ───────────────────────────────────────────────── */
 
 .toast {

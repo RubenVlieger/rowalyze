@@ -50,6 +50,8 @@ def init_db():
             activity_json TEXT,
             created_at TEXT NOT NULL,
             is_shark INTEGER DEFAULT 0,
+            wind_speed_kmh REAL,
+            wind_direction_deg REAL,
             FOREIGN KEY (user_hash) REFERENCES users(user_hash)
         );
 
@@ -70,6 +72,15 @@ def init_db():
             FOREIGN KEY (session_id) REFERENCES sessions(id)
         );
     """)
+    # Migration: add wind columns to existing databases
+    try:
+        conn.execute("ALTER TABLE sessions ADD COLUMN wind_speed_kmh REAL")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE sessions ADD COLUMN wind_direction_deg REAL")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -109,6 +120,8 @@ def save_session(
     summary: dict,
     activity: dict,
     is_shark: bool = False,
+    wind_speed_kmh: float | None = None,
+    wind_direction_deg: float | None = None,
 ) -> str:
     """Save an analysis session. Returns session ID."""
     session_id = uuid.uuid4().hex[:12]
@@ -117,13 +130,15 @@ def save_session(
     conn.execute("""
         INSERT INTO sessions (id, user_hash, activity_id, activity_name, activity_date,
                               interval_desc, params_json, results_json, chart_data_json,
-                              summary_json, activity_json, created_at, is_shark)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              summary_json, activity_json, created_at, is_shark,
+                              wind_speed_kmh, wind_direction_deg)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         session_id, user_hash, activity_id, activity_name, activity_date,
         interval_desc, json.dumps(params), json.dumps(results),
         json.dumps(chart_data), json.dumps(summary), json.dumps(activity),
         now, 1 if is_shark else 0,
+        wind_speed_kmh, wind_direction_deg,
     ))
     conn.commit()
     conn.close()
@@ -151,6 +166,8 @@ def get_session(session_id: str) -> dict | None:
         'activity': json.loads(row['activity_json']) if row['activity_json'] else {},
         'created_at': row['created_at'],
         'is_shark': bool(row['is_shark']),
+        'wind_speed_kmh': row['wind_speed_kmh'],
+        'wind_direction_deg': row['wind_direction_deg'],
     }
 
 
@@ -242,21 +259,40 @@ def get_group(group_id: str) -> dict | None:
 
 
 def get_group_sessions(group_id: str) -> list[dict]:
-    """List sessions in a group with metadata."""
+    """List sessions in a group with metadata including interval averages."""
     conn = _get_db()
     rows = conn.execute("""
         SELECT s.id, s.activity_name, s.activity_date, s.interval_desc,
                s.created_at, s.is_shark,
-               json_extract(s.summary_json, '$.avg_split_formatted') as avg_split,
+               s.results_json,
                json_extract(s.summary_json, '$.total_distance_meters') as total_distance,
-               json_extract(s.summary_json, '$.avg_cadence') as avg_cadence
+               s.wind_speed_kmh, s.wind_direction_deg
         FROM group_sessions gs
         JOIN sessions s ON gs.session_id = s.id
         WHERE gs.group_id = ?
         ORDER BY s.created_at DESC
     """, (group_id,)).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+
+    sessions = []
+    for r in rows:
+        d = dict(r)
+        # Compute interval-based averages from results_json
+        results = json.loads(d.pop('results_json', '[]') or '[]')
+        if results:
+            avg_split_raw = sum(x['avg_speed_sec_per_500m'] for x in results) / len(results)
+            avg_cad = sum(x['avg_cadence'] for x in results) / len(results)
+            mins = int(avg_split_raw) // 60
+            secs = avg_split_raw - mins * 60
+            d['interval_avg_split'] = f"{mins}:{secs:04.1f}"
+            d['interval_avg_split_raw'] = round(avg_split_raw, 1)
+            d['interval_avg_cadence'] = round(avg_cad, 1)
+        else:
+            d['interval_avg_split'] = '-'
+            d['interval_avg_split_raw'] = None
+            d['interval_avg_cadence'] = '-'
+        sessions.append(d)
+    return sessions
 
 
 def delete_group(group_id: str):

@@ -3,7 +3,8 @@
 {% block content %}
 <div class="hero">
     <h1>Analyze your rowing 🫵🫵🫵</h1>
-    <p class="hero-sub">Find your fastest intervals from any Strava rowing activity with detailed 500m split breakdowns, just like rp3portal.
+    <p class="hero-sub">Find your fastest intervals from any Strava rowing activity with detailed 500m split breakdowns,
+        just like rp3portal.
     </p>
 </div>
 
@@ -121,78 +122,75 @@
         </div>
         <div class="modal-body">
             <p class="modal-desc">Analyse a friend's activity without API access. You must be logged into Strava and
-                follow this athlete.</p>
+                be able to view this athlete's activity.</p>
 
-            <!-- Method 1: Bookmarklet (one-click) -->
+            <!-- Interval Settings -->
+            <div class="shark-method">
+                <h3 class="shark-method-title">⚙️ Interval Settings</h3>
+                <div class="form-group">
+                    <label>Interval Type</label>
+                    <div class="toggle-group">
+                        <label class="toggle-option">
+                            <input type="radio" name="shark_interval_mode" value="time" checked>
+                            <span>Time-based</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="radio" name="shark_interval_mode" value="distance">
+                            <span>Distance-based</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row" id="shark-time-fields">
+                    <div class="form-group form-group-small">
+                        <label for="shark-minutes">Minutes</label>
+                        <input type="number" id="shark-minutes" value="4" min="0" max="60">
+                    </div>
+                    <div class="form-group form-group-small">
+                        <label for="shark-seconds">Seconds</label>
+                        <input type="number" id="shark-seconds" value="50" min="0" max="59">
+                    </div>
+                </div>
+
+                <div class="form-row hidden" id="shark-distance-fields">
+                    <div class="form-group">
+                        <label for="shark-distance">Distance (meters)</label>
+                        <input type="number" id="shark-distance" value="2000" min="100" max="50000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-small">
+                        <label for="shark-count">Intervals</label>
+                        <input type="number" id="shark-count" value="3" min="1" max="20">
+                    </div>
+                    <div class="form-group form-group-small">
+                        <label for="shark-cadence">Min Cadence</label>
+                        <input type="number" id="shark-cadence" value="24" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookmarklet -->
             <div class="shark-method shark-method-primary">
-                <h3 class="shark-method-title">⚡ One-Click Method</h3>
-                <p class="shark-method-desc">Drag this button to your bookmarks bar:</p>
+                <h3 class="shark-method-title">⚡ One-Click Bookmarklet</h3>
+                <p class="shark-method-desc">Drag this button to your bookmarks bar, then click it on any Strava
+                    activity page:</p>
                 <div class="bookmarklet-container">
                     <a class="btn btn-shark btn-bookmarklet" id="shark-bookmarklet" href="javascript:void(0);"
                         onclick="return false;">
-                        🦈 RowSplit Shark
+                        🦈 Shark
                     </a>
                     <p class="bookmarklet-hint">↑ Drag me to your bookmarks bar</p>
                 </div>
                 <ol class="shark-steps-list">
-                    <li>Drag the shark button above to your bookmarks bar</li>
+                    <li>Configure interval settings above</li>
+                    <li>Drag the shark button to your bookmarks bar</li>
                     <li>Go to your friend's activity on Strava</li>
-                    <li>Click the bookmarklet in your bookmarks bar</li>
-                    <li>Done — it grabs the data and brings you back here!</li>
+                    <li>Click the bookmarklet — it grabs the data and brings you back here!</li>
                 </ol>
             </div>
 
-            <div class="shark-divider">
-                <span>or paste manually</span>
-            </div>
-
-            <!-- Method 2: Manual paste (fallback) -->
-            <div class="shark-method">
-                <h3 class="shark-method-title">📋 Manual Paste</h3>
-                <div class="form-group">
-                    <label for="shark-url">Strava Activity URL</label>
-                    <input type="text" id="shark-url" placeholder="https://www.strava.com/activities/...">
-                </div>
-
-                <details class="shark-help">
-                    <summary>How to get stream data from DevTools</summary>
-                    <ol class="shark-steps-list">
-                        <li>Open the activity in your browser (logged into Strava)</li>
-                        <li>Open DevTools (<kbd>F12</kbd> or <kbd>Cmd+Option+I</kbd>)</li>
-                        <li>Go to the <strong>Network</strong> tab</li>
-                        <li>Filter by "<strong>streams</strong>"</li>
-                        <li>Refresh the page</li>
-                        <li>Click on each stream request → copy the <strong>Response</strong></li>
-                        <li>Paste the JSON below</li>
-                    </ol>
-                </details>
-
-                <div class="form-group">
-                    <label for="shark-data">Stream JSON data</label>
-                    <textarea id="shark-data" rows="5"
-                        placeholder='Paste JSON here — should contain "time", "velocity_smooth", "cadence", "distance" arrays.'></textarea>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group form-group-small">
-                    <label for="shark-minutes">Minutes</label>
-                    <input type="number" id="shark-minutes" value="4" min="0" max="60">
-                </div>
-                <div class="form-group form-group-small">
-                    <label for="shark-seconds">Seconds</label>
-                    <input type="number" id="shark-seconds" value="50" min="0" max="59">
-                </div>
-                <div class="form-group form-group-small">
-                    <label for="shark-count">Intervals</label>
-                    <input type="number" id="shark-count" value="3" min="1" max="20">
-                </div>
-            </div>
-
-            <button class="btn btn-primary" id="shark-submit">
-                <span class="btn-text">🦈 Analyze</span>
-                <span class="btn-loading hidden"><span class="spinner"></span> Analyzing...</span>
-            </button>
             <div class="shark-error hidden" id="shark-error"></div>
         </div>
     </div>

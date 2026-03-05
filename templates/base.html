@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Rowalyze, a Strava Rowing Analyzer{% endblock %}</title>
+    <title>{% block title %}Rowalyse, a Strava Rowing Analyzer{% endblock %}</title>
     <meta name="description"
         content="Analyze your Strava rowing activities. Find your fastest intervals with detailed 500m split breakdowns, just like the rp3portal!">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,7 +31,7 @@
                     <line x1="22" y1="10" x2="18" y2="14" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" />
                 </svg>
-                <span class="logo-text">RowSplit</span>
+                <span class="logo-text">Rowalyse</span>
             </a>
             <nav class="nav">
                 {% if authenticated %}
@@ -58,8 +58,9 @@
     </main>
 
     <footer class="footer">
-        <p>RowSplit — Strava Rowing Interval Analyzer · <a href="{{ url_for('privacy') }}"
-                class="footer-link">Privacy</a></p>
+        <p>Rowalyse - a Strava session analyser, made by Ruben Vlieger · <a href="{{ url_for('privacy') }}"
+                class="footer-link">Privacy</a> · <a href="https://github.com/RubenVlieger/rowalyze" target="_blank"
+                class="footer-link">Open Source on GitHub</a></p>
     </footer>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>

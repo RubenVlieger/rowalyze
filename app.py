@@ -1,5 +1,5 @@
 """
-RowSplit — Strava Rowing Interval Analyzer
+Rowalyse — Strava Rowing Session Analyser
 
 Flask web application that lets users analyze their Strava rowing
 activities, finding the fastest intervals with 500m sub-splits.
@@ -9,6 +9,9 @@ import hashlib
 import json
 import os
 import time as time_module
+from datetime import datetime, timezone
+
+import requests as http_requests
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -39,6 +42,58 @@ SERVER_URL = os.environ.get('SERVER_URL', 'http://localhost:5000')
 # Simple in-memory cache for API responses
 _cache = {}
 CACHE_TTL = 3600
+
+# Nijmegen coordinates for wind data
+NIJMEGEN_LAT = 51.8426
+NIJMEGEN_LON = 5.8526
+
+WIND_DIRECTIONS = [
+    'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+    'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW',
+]
+
+
+def _wind_direction_label(deg: float) -> str:
+    """Convert wind direction degrees to compass label."""
+    idx = round(deg / 22.5) % 16
+    return WIND_DIRECTIONS[idx]
+
+
+def _fetch_wind_data(date_str: str) -> dict | None:
+    """
+    Fetch wind data for Nijmegen on a given date from Open-Meteo.
+    Returns {'speed_kmh': float, 'direction_deg': float, 'direction_label': str} or None.
+    """
+    if not date_str or len(date_str) < 10:
+        return None
+    date_str = date_str[:10]  # YYYY-MM-DD
+    try:
+        resp = http_requests.get(
+            'https://api.open-meteo.com/v1/forecast',
+            params={
+                'latitude': NIJMEGEN_LAT,
+                'longitude': NIJMEGEN_LON,
+                'daily': 'wind_speed_10m_max,wind_direction_10m_dominant',
+                'start_date': date_str,
+                'end_date': date_str,
+                'timezone': 'Europe/Amsterdam',
+            },
+            timeout=5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        daily = data.get('daily', {})
+        speed = daily.get('wind_speed_10m_max', [None])[0]
+        direction = daily.get('wind_direction_10m_dominant', [None])[0]
+        if speed is not None and direction is not None:
+            return {
+                'speed_kmh': round(speed, 1),
+                'direction_deg': round(direction),
+                'direction_label': _wind_direction_label(direction),
+            }
+    except Exception:
+        pass
+    return None
 
 
 def _get_redirect_uri():
@@ -262,6 +317,9 @@ def analyze():
         'url': f'https://www.strava.com/activities/{activity_id}',
     }
 
+    # Fetch wind data for activity date
+    wind = _fetch_wind_data(activity_data['date'])
+
     results_dicts = [r.to_dict() for r in results]
 
     # Save session to DB
@@ -283,6 +341,8 @@ def analyze():
         chart_data=chart_data,
         summary=summary,
         activity=activity_data,
+        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 
     return redirect(url_for('view_results', session_id=session_id))
@@ -310,6 +370,18 @@ def view_results(session_id):
 
     share_url = f"{SERVER_URL}/share/{session_id}"
 
+    # Wind data
+    wind = None
+    if sess.get('wind_speed_kmh') is not None:
+        wind = {
+            'speed_kmh': sess['wind_speed_kmh'],
+            'direction_deg': sess['wind_direction_deg'],
+            'direction_label': _wind_direction_label(sess['wind_direction_deg']),
+        }
+
+    # Activity ID for Strava embed
+    activity_id = sess['activity'].get('id', '')
+
     return render_template('results.html',
                            activity=sess['activity'],
                            summary=sess['summary'],
@@ -324,7 +396,9 @@ def view_results(session_id):
                            groups=groups,
                            share_url=share_url,
                            has_heartrate=has_heartrate,
-                           is_owner=(_get_user_hash() == sess.get('user_hash')))
+                           is_owner=(_get_user_hash() == sess.get('user_hash')),
+                           wind=wind,
+                           activity_id=activity_id)
 
 
 @app.route('/share/<session_id>')
@@ -343,6 +417,17 @@ def share_results(session_id):
 
     share_url = f"{SERVER_URL}/share/{session_id}"
 
+    # Wind data
+    wind = None
+    if sess.get('wind_speed_kmh') is not None:
+        wind = {
+            'speed_kmh': sess['wind_speed_kmh'],
+            'direction_deg': sess['wind_direction_deg'],
+            'direction_label': _wind_direction_label(sess['wind_direction_deg']),
+        }
+
+    activity_id = sess['activity'].get('id', '')
+
     return render_template('results.html',
                            activity=sess['activity'],
                            summary=sess['summary'],
@@ -358,7 +443,9 @@ def share_results(session_id):
                            share_url=share_url,
                            has_heartrate=has_heartrate,
                            is_owner=False,
-                           is_shared=True)
+                           is_shared=True,
+                           wind=wind,
+                           activity_id=activity_id)
 
 
 def _compute_overall_avg(results):
@@ -516,6 +603,10 @@ def shark_analyze():
         'url': activity_info.get('url', '#'),
     }
 
+    # Fetch wind data
+    wind_date = activity_data['date'] or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    wind = _fetch_wind_data(wind_date)
+
     results_dicts = [r.to_dict() for r in results]
     default_name = f"{num_intervals}×{interval_desc}@{int(min_cadence)}"
 
@@ -535,6 +626,8 @@ def shark_analyze():
         summary=summary,
         activity=activity_data,
         is_shark=True,
+        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 
     return jsonify({'session_id': session_id, 'url': url_for('view_results', session_id=session_id)})
@@ -546,6 +639,32 @@ def shark_receive():
     raw_streams = request.form.get('streams', '')
     activity_url = request.form.get('activity_url', '')
     activity_name = request.form.get('activity_name', '🦈 Shark Activity')
+
+    # Read interval params from form (set by bookmarklet)
+    interval_mode = request.form.get('interval_mode', 'time')
+    try:
+        num_intervals = int(request.form.get('num_intervals', 3))
+    except (ValueError, TypeError):
+        num_intervals = 3
+    try:
+        min_cadence = float(request.form.get('min_cadence', 24))
+    except (ValueError, TypeError):
+        min_cadence = 24
+
+    interval_duration = None
+    interval_distance = None
+    if interval_mode == 'time':
+        try:
+            minutes = int(request.form.get('interval_minutes', 4))
+            seconds = int(request.form.get('interval_seconds', 50))
+            interval_duration = minutes * 60 + seconds
+        except (ValueError, TypeError):
+            interval_duration = 290
+    else:
+        try:
+            interval_distance = float(request.form.get('interval_distance', 2000))
+        except (ValueError, TypeError):
+            interval_distance = 2000
 
     if not raw_streams:
         flash('No stream data received from bookmarklet.', 'error')
@@ -567,7 +686,6 @@ def shark_receive():
         streams = parsed
     elif isinstance(streams, dict):
         # Format from key_by_type=true: {"time": {"data": [...], ...}, ...}
-        # Unwrap nested {data: [...]} objects into plain arrays
         for key in list(streams.keys()):
             val = streams[key]
             if isinstance(val, dict) and 'data' in val:
@@ -579,14 +697,10 @@ def shark_receive():
         flash(f'Missing required streams: {", ".join(missing)}.', 'error')
         return redirect(url_for('index'))
 
-    # Default analysis params
-    interval_duration = 290  # 4m50s
-    num_intervals = 3
-    min_cadence = 24
-
     try:
         results, chart_data, summary, overall_avg, interval_desc = _run_analysis(
-            streams, 'time', interval_duration, None, num_intervals, min_cadence,
+            streams, interval_mode, interval_duration, interval_distance,
+            num_intervals, min_cadence,
         )
     except Exception as e:
         flash(f'Analysis failed: {e}', 'error')
@@ -600,10 +714,14 @@ def shark_receive():
     except Exception:
         pass
 
+    # Use today's date for wind (shark mode doesn't always have activity date)
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    wind = _fetch_wind_data(today)
+
     activity_data = {
         'id': activity_id,
         'name': activity_name,
-        'date': '',
+        'date': today,
         'type': 'Rowing',
         'url': activity_url or '#',
     }
@@ -617,16 +735,18 @@ def shark_receive():
         user_hash=user_hash,
         activity_id=activity_data['id'],
         activity_name=activity_data['name'],
-        activity_date='',
+        activity_date=today,
         interval_desc=default_name,
-        params={'mode': 'time', 'duration': interval_duration,
-                'distance': None, 'count': num_intervals,
+        params={'mode': interval_mode, 'duration': interval_duration,
+                'distance': interval_distance, 'count': num_intervals,
                 'min_cadence': min_cadence},
         results=results_dicts,
         chart_data=chart_data,
         summary=summary,
         activity=activity_data,
         is_shark=True,
+        wind_speed_kmh=wind['speed_kmh'] if wind else None,
+        wind_direction_deg=wind['direction_deg'] if wind else None,
     )
 
     return redirect(url_for('view_results', session_id=session_id))

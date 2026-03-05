@@ -341,15 +341,46 @@ function initSharkModal() {
     const btn = document.getElementById('shark-btn');
     const modal = document.getElementById('shark-modal');
     const close = document.getElementById('shark-close');
-    const submit = document.getElementById('shark-submit');
     const bookmarklet = document.getElementById('shark-bookmarklet');
 
     if (!btn || !modal) return;
 
-    // Generate the bookmarklet href
-    if (bookmarklet) {
+    // Interval mode toggle
+    const sharkModeRadios = document.querySelectorAll('input[name="shark_interval_mode"]');
+    const sharkTimeFields = document.getElementById('shark-time-fields');
+    const sharkDistFields = document.getElementById('shark-distance-fields');
+
+    sharkModeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value === 'time') {
+                sharkTimeFields.classList.remove('hidden');
+                sharkDistFields.classList.add('hidden');
+            } else {
+                sharkTimeFields.classList.add('hidden');
+                sharkDistFields.classList.remove('hidden');
+            }
+            updateBookmarklet();
+        });
+    });
+
+    // Update bookmarklet when any param changes
+    const paramInputs = ['shark-minutes', 'shark-seconds', 'shark-count',
+        'shark-cadence', 'shark-distance'];
+    paramInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateBookmarklet);
+    });
+
+    function updateBookmarklet() {
+        if (!bookmarklet) return;
         const serverUrl = window.location.origin;
-        // The bookmarklet script: runs on strava.com, fetches streams, submits via form POST
+        const mode = document.querySelector('input[name="shark_interval_mode"]:checked')?.value || 'time';
+        const minutes = document.getElementById('shark-minutes')?.value || '4';
+        const seconds = document.getElementById('shark-seconds')?.value || '50';
+        const count = document.getElementById('shark-count')?.value || '3';
+        const cadence = document.getElementById('shark-cadence')?.value || '24';
+        const distance = document.getElementById('shark-distance')?.value || '2000';
+
         const bmCode = `javascript:void(function(){` +
             `if(!location.href.match(/strava\\.com\\/activities\\/(\\d+)/)){alert('Open a Strava activity page first!');return;}` +
             `var id=location.href.match(/\\/activities\\/(\\d+)/)[1];` +
@@ -357,22 +388,26 @@ function initSharkModal() {
             `var types='time,velocity_smooth,cadence,distance,heartrate';` +
             `var overlay=document.createElement('div');` +
             `overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';` +
-            `overlay.innerHTML='<div style=\"background:white;padding:32px;border-radius:12px;text-align:center;font-family:Inter,sans-serif;\"><div style=\"font-size:2rem;\">🦈</div><div style=\"margin-top:8px;font-size:1rem;\">Fetching streams...</div></div>';` +
+            `overlay.innerHTML='<div style="background:white;padding:32px;border-radius:12px;text-align:center;font-family:Inter,sans-serif;"><div style="font-size:2rem;">🦈</div><div style="margin-top:8px;font-size:1rem;">Fetching streams...</div></div>';` +
             `document.body.appendChild(overlay);` +
             `fetch('/api/v3/activities/'+id+'/streams?keys='+types+'&key_by_type=true',{credentials:'include'})` +
             `.then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})` +
             `.then(function(data){` +
             `var form=document.createElement('form');` +
             `form.method='POST';form.action='${serverUrl}/shark/receive';` +
-            `var f1=document.createElement('input');f1.type='hidden';f1.name='streams';f1.value=JSON.stringify(data);form.appendChild(f1);` +
-            `var f2=document.createElement('input');f2.type='hidden';f2.name='activity_url';f2.value=location.href;form.appendChild(f2);` +
-            `var f3=document.createElement('input');f3.type='hidden';f3.name='activity_name';f3.value=title;form.appendChild(f3);` +
+            `var fields={streams:JSON.stringify(data),activity_url:location.href,activity_name:title,` +
+            `interval_mode:'${mode}',interval_minutes:'${minutes}',interval_seconds:'${seconds}',` +
+            `interval_distance:'${distance}',num_intervals:'${count}',min_cadence:'${cadence}'};` +
+            `for(var k in fields){var inp=document.createElement('input');inp.type='hidden';inp.name=k;inp.value=fields[k];form.appendChild(inp);}` +
             `document.body.appendChild(form);form.submit();` +
             `})` +
             `.catch(function(e){overlay.remove();alert('Shark failed: '+e.message+'\\n\\nMake sure you are logged into Strava and can see this activity.');})` +
             `}())`;
         bookmarklet.href = bmCode;
     }
+
+    // Initial generation
+    updateBookmarklet();
 
     btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -386,113 +421,6 @@ function initSharkModal() {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.classList.add('hidden');
     });
-
-    submit.addEventListener('click', sharkSubmit);
-}
-
-async function sharkSubmit() {
-    const errorEl = document.getElementById('shark-error');
-    const submitBtn = document.getElementById('shark-submit');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-
-    errorEl.classList.add('hidden');
-    errorEl.textContent = '';
-
-    const url = document.getElementById('shark-url').value.trim();
-    const rawData = document.getElementById('shark-data').value.trim();
-    const minutes = parseInt(document.getElementById('shark-minutes').value) || 4;
-    const seconds = parseInt(document.getElementById('shark-seconds').value) || 50;
-    const count = parseInt(document.getElementById('shark-count').value) || 3;
-
-    if (!rawData) {
-        errorEl.textContent = 'Please paste the stream JSON data.';
-        errorEl.classList.remove('hidden');
-        return;
-    }
-
-    // Parse the pasted JSON
-    let streams;
-    try {
-        const parsed = JSON.parse(rawData);
-
-        // Handle different formats: direct arrays or nested objects
-        streams = {};
-        const keys = ['time', 'velocity_smooth', 'cadence', 'distance', 'heartrate'];
-        for (const key of keys) {
-            if (key in parsed) {
-                if (Array.isArray(parsed[key])) {
-                    streams[key] = parsed[key];
-                } else if (parsed[key] && parsed[key].data) {
-                    streams[key] = parsed[key].data;
-                }
-            }
-        }
-
-        // Also handle if it's a list of stream objects
-        if (Array.isArray(parsed)) {
-            streams = {};
-            parsed.forEach(s => {
-                if (s.type && s.data) {
-                    streams[s.type] = s.data;
-                }
-            });
-        }
-
-        const required = ['time', 'velocity_smooth', 'cadence', 'distance'];
-        const missing = required.filter(k => !(k in streams));
-        if (missing.length) {
-            throw new Error(`Missing required streams: ${missing.join(', ')}`);
-        }
-    } catch (e) {
-        errorEl.textContent = `Failed to parse JSON: ${e.message}`;
-        errorEl.classList.remove('hidden');
-        return;
-    }
-
-    // Show loading
-    if (btnText && btnLoading) {
-        btnText.classList.add('hidden');
-        btnLoading.classList.remove('hidden');
-    }
-    submitBtn.disabled = true;
-
-    try {
-        const resp = await fetch('/api/shark', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                streams: streams,
-                params: {
-                    mode: 'time',
-                    duration: minutes * 60 + seconds,
-                    count: count,
-                    min_cadence: 24,
-                },
-                activity: {
-                    url: url || '#',
-                    name: '🦈 Shark Activity',
-                },
-            }),
-        });
-
-        const result = await resp.json();
-
-        if (resp.ok && result.url) {
-            window.location.href = result.url;
-        } else {
-            throw new Error(result.error || 'Analysis failed');
-        }
-    } catch (e) {
-        errorEl.textContent = `Error: ${e.message}`;
-        errorEl.classList.remove('hidden');
-    } finally {
-        if (btnText && btnLoading) {
-            btnText.classList.remove('hidden');
-            btnLoading.classList.add('hidden');
-        }
-        submitBtn.disabled = false;
-    }
 }
 
 
