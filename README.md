@@ -1,86 +1,68 @@
-# RowSplit 🚣
+# Rowalyse
 
-A simple web tool to analyze your Strava rowing sessions. Paste a Strava activity URL, and RowSplit finds your fastest intervals with detailed 500m split breakdowns — speed, cadence, heart rate, the works.
+**A chill, easy-to-use web tool to analyze your Strava rowing sessions.**
 
-Built for me and my rowing friends at Njord to quickly compare our interval pieces without manually digging through Strava data.
+Ever wanted to see your on-the-water splits exactly like you do on the erg (or rp3portal)? Rowalyse takes your Strava activity, finds your fastest intervals, and breaks them down into neat 500m sub-splits with speed, cadence, and heart rate data. 
 
-## What it does
+Built for the rowing community to stop guessing and start knowing exactly where the watts are going.
 
-- **Finds fastest intervals** — by time (e.g. 4min50s) or distance (e.g. 2000m)
-- **500m sub-splits** — each interval broken into 500m chunks with per-segment stats
-- **Graphs** — speed, cadence, and heart rate plotted per interval
-- **Groups** — save sessions into playlists (like YouTube/Spotify) for easy comparison
-- **Share** — public share links so your coach or crewmates can see your results
-- **🦈 Shark Mode** — analyze a friend's activity using a bookmarklet, no API access needed
+<img src="resources/homepage.png" width="400">
+## Features
 
-## Quick Start
+*   **Smart Intervals:** Tell it to find your best `4x 5min` or `1x 2000m` pieces, and it'll automatically pull the fastest continuous blocks from your session.
+*   **500m Sub-splits:** Every piece is sliced into 500m chunks so you can see if you *actually* kept it steady or just flew and died.
+*   **Beautiful Charts:** Clean, interactive graphs for speed, cadence, and heart rate over distance.
+*   **Sharkmode 🦈:** A slick bookmarklet that lets you analyze a friend's (or rival's) Strava activity directly from your browser, without needing them to connect their account. 
+*   **Wind Context :** Automatically pulls historical wind data (currently tailored only for useage in Nijmegen) so you finally have proof that it was a headwind. 
+*   **Playlists / Groups:** Save and group your sessions to easily compare your 2K tests or steady-state pieces over time.
+*   **Shareable Links:** Send your coach or crewmates a public link to your analysis. No login required for them.
 
+## Getting Started
+Want to run your own instance? It's super straightforward:
+
+### 1. Grab your Strava API keys
+1. Go to[strava.com/settings/api](https://www.strava.com/settings/api)
+2. Create an application.
+3. Set the **Authorization Callback Domain** to `localhost` (or your domain).
+4. Grab your `Client ID` and `Client Secret`.
+
+### 2. Set up the environment
+Clone the repo and set up your `.env` file:
 ```bash
-# Clone
-git clone https://github.com/yourusername/rowsplit.git
-cd rowsplit
+git clone https://github.com/RubenVlieger/rowalyze.git
+cd rowalyze
 
-# Set up your Strava API credentials
+# Copy the example env file
 cp .env.example .env
-# Edit .env with your Strava Client ID & Secret
-# Get these from: https://www.strava.com/settings/api
 
-# Run with Docker
-docker compose up -d --build
-
-# → Open http://localhost:8080
+# Edit .env and add your Strava keys and a random Flask secret key
+nano .env 
 ```
 
-## Strava API Setup
+### 3. Spin it up
+```bash
+docker compose up -d --build
+```
+Boom, it's now live at `http://localhost:5000`.
 
-1. Go to [strava.com/settings/api](https://www.strava.com/settings/api)
-2. Create an application (use any name/website)
-3. Set **Authorization Callback Domain** to `localhost` (or your server domain)
-4. Copy the Client ID and Client Secret into your `.env` file
+<img src="resources/results_page.png" width="600">
 
-## 🦈 Shark Mode
+## Wait, what is Sharkmode even?
 
-Want to analyze a friend's activity that you can see on Strava but can't access via the API?
-
-1. Log into Strava in your browser
-2. Drag the **"🦈 RowSplit Shark"** bookmarklet from the app's homepage to your bookmarks bar
-3. Navigate to your friend's activity on Strava
-4. Click the bookmarklet
-5. Done — it grabs the stream data and sends it to RowSplit for analysis
-
-*The bookmarklet runs in the context of strava.com (so no CORS issues) and uses your logged-in session to fetch the same data you'd see in DevTools.*
-
+Sometimes you see a crewmate post a massive session, but they haven't connected to Rowalyse. 
+1. Log into Strava.
+2. Drag the **🦈 Rowalyse** bookmarklet from the homepage to your bookmarks bar.
+3. Go to their activity page on Strava and click the bookmark.
+4. It grabs the stream data directly from your browser session and ships it to Rowalyse for a full breakdown. Smooth, right?
+And next time you only have to open the bookpage on Strava!
+   
 ## Tech Stack
 
-- **Backend:** Python / Flask / Gunicorn
-- **Frontend:** Vanilla HTML/CSS/JS, Chart.js
-- **Database:** SQLite (persistent Docker volume)
-- **Deploy:** Docker
+Keeping it simple and fast:
+*   **Backend:** Python, Flask, Gunicorn
+*   **Frontend:** Vanilla HTML/CSS/JS (no heavy frameworks, just vibes), Chart.js, Leaflet.js
+*   **Database:** SQLite (local, private, and portable)
+*   **Weather:** Open-Meteo API for that crucial wind data.
 
-## Project Structure
-
-```
-├── app.py              # Flask app (routes, auth, analysis)
-├── analyze.py          # Interval analysis engine
-├── strava_client.py    # Strava OAuth + API client
-├── db.py               # SQLite database layer
-├── main.py             # CLI tool (still works!)
-├── templates/          # Jinja2 HTML templates
-├── static/             # CSS + JS
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
-
-## Privacy
-
-RowSplit stores a hashed (SHA-256) fragment of your Strava athlete ID for analytics — it cannot be reversed to identify you. No passwords or full tokens are stored. See [PRIVACY.md](PRIVACY.md) for details.
-
-## License
-
-This project uses a custom non-commercial license. See [LICENSE](LICENSE) for details.
-You may NOT use this code for commercial purposes without written permission from the author.
-
----
-
-*Made with ☕ for the rowing community*
+## Privacy first design
+Rowalyse stores a hashed, anonymized fragment of your Strava ID just to count users. It doesn't store your passwords, it doesn't track your GPS coordinates (everything is processed in memory), it's just a tool to make boats go faster. 
