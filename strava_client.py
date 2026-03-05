@@ -180,6 +180,29 @@ def get_access_token(client_id: str, client_secret: str) -> str:
 
 # ─── API Calls ──────────────────────────────────────────────────────
 
+def fetch_recent_activities(access_token: str, per_page: int = 10) -> list[dict]:
+    """Fetch recent activities from Strava, returning rowing-type activities."""
+    resp = requests.get(
+        f"{STRAVA_API_BASE}/athlete/activities",
+        headers={'Authorization': f'Bearer {access_token}'},
+        params={'per_page': per_page, 'page': 1},
+    )
+    resp.raise_for_status()
+    activities = resp.json()
+    # Filter to rowing activities and return compact data
+    result = []
+    for a in activities:
+        if a.get('type') in ('Rowing', 'VirtualRowing'):
+            result.append({
+                'id': a['id'],
+                'name': a.get('name', 'Untitled'),
+                'distance': round(a.get('distance', 0)),
+                'date': (a.get('start_date_local', '') or '')[:10],
+                'url': f"https://www.strava.com/activities/{a['id']}",
+            })
+    return result[:5]  # Return max 5
+
+
 def fetch_activity_details(access_token: str, activity_id: str) -> dict:
     """Fetch activity metadata."""
     resp = requests.get(

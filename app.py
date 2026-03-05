@@ -27,6 +27,7 @@ from strava_client import (
     get_valid_token,
     fetch_activity_details,
     fetch_activity_streams,
+    fetch_recent_activities,
 )
 import db
 
@@ -197,13 +198,30 @@ def index():
     athlete = session.get('athlete_name', '')
     stats = db.get_stats()
     groups = []
+    recent_activities = []
     if authenticated and _get_user_hash():
         groups = db.get_user_groups(_get_user_hash())
+        # Fetch recent rowing activities from Strava
+        try:
+            token_data = session.get('strava_token', {})
+            access_token, new_token_data = get_valid_token(token_data, CLIENT_ID, CLIENT_SECRET)
+            session['strava_token'] = new_token_data
+            # Use cache to avoid hitting Strava API on every page load
+            cache_key = f"recent_{_get_user_hash()}"
+            cached = _cache.get(cache_key)
+            if cached and (time_module.time() - cached['ts'] < 300):  # 5 min
+                recent_activities = cached['data']
+            else:
+                recent_activities = fetch_recent_activities(access_token)
+                _cache[cache_key] = {'data': recent_activities, 'ts': time_module.time()}
+        except Exception:
+            pass  # Graceful fallback — just don't show recent activities
     return render_template('index.html',
                            authenticated=authenticated,
                            athlete_name=athlete,
                            stats=stats,
-                           groups=groups)
+                           groups=groups,
+                           recent_activities=recent_activities)
 
 
 @app.route('/auth/strava')

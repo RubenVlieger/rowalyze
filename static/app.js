@@ -1,4 +1,4 @@
-/* ─── RowSplit Client-Side JavaScript ─────────────────────────── */
+/* ─── Rowalyse Client-Side JavaScript ─────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
     initToggle();
@@ -6,6 +6,27 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormSubmit();
     initSharkModal();
 });
+
+
+// ─── Recent Activity Selection ─────────────────────────────────
+
+function selectActivity(url) {
+    const input = document.getElementById('activity_url');
+    if (input) {
+        input.value = url;
+        input.focus();
+        // Scroll to the form smoothly
+        const form = document.getElementById('analyze-form');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Brief highlight effect
+        input.style.borderColor = '#3b82f6';
+        input.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
+        setTimeout(() => {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+        }, 1500);
+    }
+}
 
 
 // ─── Interval Mode Toggle ──────────────────────────────────────

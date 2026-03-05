@@ -1272,6 +1272,75 @@ body {
     text-decoration: underline;
 }
 
+/* ─── Recent Sessions ───────────────────────────────────────────── */
+
+.recent-card {
+    padding: 20px 24px;
+}
+
+.recent-card .section-title {
+    margin-bottom: 12px;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: background var(--transition);
+    width: 100%;
+}
+
+.recent-item:hover {
+    background: var(--color-bg);
+}
+
+.recent-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.recent-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent-meta {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.recent-arrow {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    transition: transform var(--transition), color var(--transition);
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.recent-item:hover .recent-arrow {
+    transform: translateX(3px);
+    color: var(--color-primary);
+}
+
 .muted {
     color: var(--color-text-muted);
     font-size: 0.875rem;
