@@ -292,39 +292,30 @@ function initStatsChart(data) {
     const ctx = document.getElementById('stats-chart');
     if (!ctx || !data || !data.length) return;
 
-    // Fill in missing dates between first and last
+    // Fill in missing dates between first data point and today
     const filled = [];
-    if (data.length > 0) {
-        const start = new Date(data[0].date);
-        const end = new Date(data[data.length - 1].date);
-        const dateMap = {};
-        data.forEach(d => dateMap[d.date] = d.count);
+    const start = new Date(data[0].date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateMap = {};
+    data.forEach(d => dateMap[d.date] = d.count);
 
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const key = d.toISOString().slice(0, 10);
-            filled.push({ date: key, count: dateMap[key] || 0 });
-        }
+    for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        filled.push({ date: key, count: dateMap[key] || 0 });
     }
 
-    // Cumulative total
-    let cumulative = 0;
-    const cumData = filled.map(d => {
-        cumulative += d.count;
-        return { x: d.date, y: cumulative };
-    });
-
     new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
+            labels: filled.map(d => d.date),
             datasets: [{
-                label: 'Total Sessions',
-                data: cumData,
+                label: 'Sessions',
+                data: filled.map(d => d.count),
+                backgroundColor: '#3b82f680',
                 borderColor: '#3b82f6',
-                backgroundColor: '#3b82f620',
-                borderWidth: 2,
-                pointRadius: cumData.length > 30 ? 0 : 3,
-                tension: 0.3,
-                fill: true,
+                borderWidth: 1,
+                borderRadius: 4,
             }],
         },
         options: {
@@ -335,7 +326,6 @@ function initStatsChart(data) {
             },
             scales: {
                 x: {
-                    type: 'category',
                     ticks: {
                         font: { size: 10, family: 'Inter' },
                         maxTicksLimit: 7,
@@ -463,6 +453,36 @@ function initSharkModal() {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.classList.add('hidden');
     });
+
+    // iPhone: copy bookmarklet code to clipboard
+    const copyBtn = document.getElementById('copy-shark-code');
+    if (copyBtn && bookmarklet) {
+        copyBtn.addEventListener('click', () => {
+            const code = bookmarklet.href;
+            navigator.clipboard.writeText(code).then(() => {
+                const status = document.getElementById('copy-shark-status');
+                if (status) {
+                    status.textContent = ' ✓ Copied!';
+                    status.style.color = '#10b981';
+                    setTimeout(() => { status.textContent = ''; }, 2500);
+                }
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = bookmarklet.href;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const status = document.getElementById('copy-shark-status');
+                if (status) {
+                    status.textContent = ' ✓ Copied!';
+                    status.style.color = '#10b981';
+                    setTimeout(() => { status.textContent = ''; }, 2500);
+                }
+            });
+        });
+    }
 }
 
 

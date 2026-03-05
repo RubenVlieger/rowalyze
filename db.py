@@ -4,12 +4,15 @@ Database layer for RowSplit.
 SQLite-backed persistence for analytics, sessions, and groups.
 """
 
+import base64
 import hashlib
 import json
 import os
 import sqlite3
 import uuid
 from datetime import datetime, timezone
+
+from cryptography.fernet import Fernet, InvalidToken
 
 
 DB_DIR = os.environ.get('ROWSPLIT_DATA_DIR', os.path.join(os.path.dirname(__file__), 'data'))
@@ -83,6 +86,30 @@ def init_db():
         pass
     conn.commit()
     conn.close()
+
+
+# ─── Encryption Helpers ────────────────────────────────────────────
+
+def _get_encryption_key(user_hash: str) -> bytes:
+    """Derive a Fernet key from user_hash + app secret."""
+    app_secret = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-change-me')
+    raw = hashlib.sha256(f"{user_hash}:{app_secret}".encode()).digest()
+    return base64.urlsafe_b64encode(raw)  # 32 bytes → valid Fernet key
+
+
+def _encrypt_name(user_hash: str, name: str) -> str:
+    """Encrypt a group name for storage."""
+    f = Fernet(_get_encryption_key(user_hash))
+    return f.encrypt(name.encode()).decode()
+
+
+def _decrypt_name(user_hash: str, encrypted_name: str) -> str:
+    """Decrypt a group name. Returns the encrypted value on failure."""
+    try:
+        f = Fernet(_get_encryption_key(user_hash))
+        return f.decrypt(encrypted_name.encode()).decode()
+    except (InvalidToken, Exception):
+        return encrypted_name  # Graceful fallback
 
 
 # ─── User Tracking ─────────────────────────────────────────────────
@@ -199,7 +226,7 @@ def get_stats() -> dict:
 # ─── Groups / Playlists ────────────────────────────────────────────
 
 def get_user_groups(user_hash: str) -> list[dict]:
-    """List all groups for a user."""
+    """List all groups for a user. Decrypts group names."""
     conn = _get_db()
     rows = conn.execute("""
         SELECT g.*, COUNT(gs.session_id) as session_count,
@@ -212,16 +239,22 @@ def get_user_groups(user_hash: str) -> list[dict]:
         ORDER BY g.created_at DESC
     """, (user_hash,)).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    result = []
+    for r in rows:
+        d = dict(r)
+        d['name'] = _decrypt_name(user_hash, d['name'])
+        result.append(d)
+    return result
 
 
 def create_group(user_hash: str, name: str) -> str:
-    """Create a new group. Returns group ID."""
+    """Create a new group. Returns group ID. Name is encrypted before storage."""
     group_id = uuid.uuid4().hex[:12]
     now = datetime.now(timezone.utc).isoformat()
+    encrypted_name = _encrypt_name(user_hash, name)
     conn = _get_db()
     conn.execute("INSERT INTO groups (id, user_hash, name, created_at) VALUES (?, ?, ?, ?)",
-                 (group_id, user_hash, name, now))
+                 (group_id, user_hash, encrypted_name, now))
     conn.commit()
     conn.close()
     return group_id
@@ -249,13 +282,15 @@ def remove_session_from_group(group_id: str, session_id: str):
 
 
 def get_group(group_id: str) -> dict | None:
-    """Get group details."""
+    """Get group details. Decrypts the group name."""
     conn = _get_db()
     row = conn.execute("SELECT * FROM groups WHERE id = ?", (group_id,)).fetchone()
     conn.close()
     if not row:
         return None
-    return dict(row)
+    d = dict(row)
+    d['name'] = _decrypt_name(d['user_hash'], d['name'])
+    return d
 
 
 def get_group_sessions(group_id: str) -> list[dict]:

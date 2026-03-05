@@ -3,52 +3,63 @@
 {% block title %}{{ activity.name }} — Rowalyse{% endblock %}
 
 {% block content %}
-<div class="results-header">
-    <a href="{{ url_for('index') }}" class="back-link">← New Analysis</a>
-    <h1 class="activity-title">{{ activity.name }}</h1>
-    <p class="activity-meta">
-        {{ activity.date }} · {{ activity.type }} ·
-        <a href="{{ activity.url }}" target="_blank" class="strava-link">View on Strava ↗</a>
-    </p>
-</div>
+<div class="results-top-row">
+    <div class="results-top-info">
+        <a href="{{ url_for('index') }}" class="back-link">← New Analysis</a>
+        <h1 class="activity-title">{{ activity.name }}</h1>
+        <p class="activity-meta">
+            {{ activity.date }} · {{ activity.type }} ·
+            <a href="{{ activity.url }}" target="_blank" class="strava-link">View on Strava ↗</a>
+        </p>
 
-<!-- Action Bar -->
-<div class="action-bar">
-    {% if share_url %}
-    <button class="btn btn-secondary btn-sm" onclick="copyShareLink('{{ share_url }}')" id="share-btn">
-        📋 Share Link
-    </button>
-    {% endif %}
+        <!-- Action Bar -->
+        <div class="action-bar">
+            {% if share_url %}
+            <button class="btn btn-secondary btn-sm" onclick="copyShareLink('{{ share_url }}')" id="share-btn">
+                📋 Share Link
+            </button>
+            {% endif %}
 
-    {% if is_owner is not defined or is_owner %}
-    {% if groups is defined and groups|length > 0 %}
-    <div class="save-group-dropdown">
-        <button class="btn btn-secondary btn-sm" onclick="toggleDropdown('save-dropdown')">
-            📁 Save to Group
-        </button>
-        <div class="dropdown-content hidden" id="save-dropdown">
-            {% for g in groups %}
-            <form action="{{ url_for('add_to_group', group_id=g.id) }}" method="POST" class="dropdown-form">
-                <input type="hidden" name="session_id" value="{{ session_id }}">
+            {% if is_owner is not defined or is_owner %}
+            {% if groups is defined and groups|length > 0 %}
+            <div class="save-group-dropdown">
+                <button class="btn btn-secondary btn-sm" onclick="toggleDropdown('save-dropdown')">
+                    📁 Save to Group
+                </button>
+                <div class="dropdown-content hidden" id="save-dropdown">
+                    {% for g in groups %}
+                    <form action="{{ url_for('add_to_group', group_id=g.id) }}" method="POST" class="dropdown-form">
+                        <input type="hidden" name="session_id" value="{{ session_id }}">
+                        <input type="hidden" name="redirect_to"
+                            value="{{ url_for('view_results', session_id=session_id) }}">
+                        <button type="submit" class="dropdown-item">{{ g.name }}</button>
+                    </form>
+                    {% endfor %}
+                    <hr class="dropdown-divider">
+                    <form action="{{ url_for('create_group') }}" method="POST" class="dropdown-form dropdown-form-new">
+                        <input type="hidden" name="redirect_to"
+                            value="{{ url_for('view_results', session_id=session_id) }}">
+                        <input type="text" name="name" placeholder="New group name..." class="dropdown-input" required>
+                        <button type="submit" class="dropdown-item dropdown-item-new">+ Create & Add</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <form action="{{ url_for('create_group') }}" method="POST" class="inline-form">
                 <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
-                <button type="submit" class="dropdown-item">{{ g.name }}</button>
+                <input type="text" name="name" placeholder="New group name..." class="input-sm" required>
+                <button type="submit" class="btn btn-secondary btn-sm">📁 Create Group</button>
             </form>
-            {% endfor %}
-            <hr class="dropdown-divider">
-            <form action="{{ url_for('create_group') }}" method="POST" class="dropdown-form dropdown-form-new">
-                <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
-                <input type="text" name="name" placeholder="New group name..." class="dropdown-input" required>
-                <button type="submit" class="dropdown-item dropdown-item-new">+ Create & Add</button>
-            </form>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
-    {% else %}
-    <form action="{{ url_for('create_group') }}" method="POST" class="inline-form">
-        <input type="hidden" name="redirect_to" value="{{ url_for('view_results', session_id=session_id) }}">
-        <input type="text" name="name" placeholder="New group name..." class="input-sm" required>
-        <button type="submit" class="btn btn-secondary btn-sm">📁 Create Group</button>
-    </form>
-    {% endif %}
+
+    {% if activity_id and activity_id != 'shark' %}
+    <div class="results-top-map">
+        <div class="strava-embed-placeholder" data-embed-type="activity" data-embed-id="{{ activity_id }}"
+            data-style="standard" data-from-embed="false"></div>
+    </div>
     {% endif %}
 </div>
 
@@ -75,19 +86,7 @@
     </div>
 </div>
 
-<!-- Wind Data -->
-{% if wind %}
-<div class="card wind-card">
-    <div class="wind-content">
-        <span class="wind-icon">💨</span>
-        <div class="wind-details">
-            <span class="wind-value">{{ wind.speed_kn }} kn</span>
-            <span class="wind-direction">{{ wind.direction_label }} ({{ wind.direction_deg }}°)</span>
-        </div>
-        <span class="wind-disclaimer">Wind data for Nijmegen</span>
-    </div>
-</div>
-{% endif %}
+
 
 <!-- Intervals -->
 <div class="card">
@@ -158,13 +157,16 @@
 </div>
 {% endif %}
 
-<!-- Strava Map Embed -->
-{% if activity_id and activity_id != 'shark' %}
-<div class="card">
-    <h2 class="section-title">Route Map</h2>
-    <div class="strava-embed-container">
-        <div class="strava-embed-placeholder" data-embed-type="activity" data-embed-id="{{ activity_id }}"
-            data-style="standard" data-from-embed="false"></div>
+<!-- Wind Data (below graphs) -->
+{% if wind %}
+<div class="card wind-card">
+    <div class="wind-content">
+        <span class="wind-icon">💨</span>
+        <div class="wind-details">
+            <span class="wind-value">{{ wind.speed_kn }} kn</span>
+            <span class="wind-direction">{{ wind.direction_label }} ({{ wind.direction_deg }}°)</span>
+        </div>
+        <span class="wind-disclaimer">Wind data for Nijmegen</span>
     </div>
 </div>
 {% endif %}

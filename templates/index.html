@@ -23,11 +23,6 @@
         <span class="stats-label">athletes use this tool!</span>
     </div>
 </div>
-{% if stats.sessions_by_date|length > 0 %}
-<div class="card stats-chart-card">
-    <canvas id="stats-chart" height="80"></canvas>
-</div>
-{% endif %}
 {% endif %}
 
 {% if not authenticated %}
@@ -162,9 +157,33 @@
                 </ol>
             </div>
 
+            <!-- iPhone / Mobile Setup -->
+            <div class="shark-method">
+                <h3 class="shark-method-title">📱 iPhone / Mobile Setup</h3>
+                <p class="shark-method-desc">Bookmarklets can't be dragged on mobile. Follow these steps instead:</p>
+                <ol class="shark-steps-list">
+                    <li>Tap the button below to <strong>copy the bookmarklet code</strong></li>
+                    <li>Bookmark any page in Safari (e.g. this one)</li>
+                    <li>Open your bookmarks, tap <strong>Edit</strong>, find the bookmark you just saved</li>
+                    <li>Replace the URL with the copied code (long-press → Paste)</li>
+                    <li>Navigate to a Strava activity page and tap the bookmark!</li>
+                </ol>
+                <button class="btn btn-shark btn-sm" id="copy-shark-code" style="margin-top: 12px;">
+                    📋 Copy Bookmarklet Code
+                </button>
+                <span class="copy-shark-status" id="copy-shark-status"></span>
+            </div>
+
             <div class="shark-error hidden" id="shark-error"></div>
         </div>
     </div>
+</div>
+{% endif %}
+
+{% if stats and stats.sessions_by_date|length > 0 %}
+<div class="card stats-chart-card">
+    <h3 class="section-title" style="margin-bottom: 12px;">📊 Sessions per day</h3>
+    <canvas id="stats-chart" height="80"></canvas>
 </div>
 {% endif %}
 
