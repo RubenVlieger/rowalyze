@@ -6,7 +6,6 @@ Ever wanted to see your on-the-water splits exactly like you do on the erg (or r
 
 Built for the rowing community to stop guessing and start knowing exactly where the watts are going.
 
-<img src="resources/homepage.png" width="400">
 ## Features
 
 *   **Smart Intervals:** Tell it to find your best `4x 5min` or `1x 2000m` pieces, and it'll automatically pull the fastest continuous blocks from your session.
