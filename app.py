@@ -397,10 +397,16 @@ def view_results(session_id):
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
 
+    # Sort results by start time (chronological)
+    if sess.get('results'):
+        sess['results'].sort(key=lambda r: r.get('start_time_seconds', 0))
+
     # Activity ID for Strava embed
     activity_id = sess['activity'].get('id', '')
 
     return render_template('results.html',
+                           authenticated=_is_authenticated(),
+                           athlete_name=session.get('athlete_name', ''),
                            activity=sess['activity'],
                            summary=sess['summary'],
                            results=sess['results'],
@@ -444,9 +450,15 @@ def share_results(session_id):
             'direction_label': _wind_direction_label(sess['wind_direction_deg']),
         }
 
+    # Sort results by start time (chronological)
+    if sess.get('results'):
+        sess['results'].sort(key=lambda r: r.get('start_time_seconds', 0))
+
     activity_id = sess['activity'].get('id', '')
 
     return render_template('results.html',
+                           authenticated=_is_authenticated(),
+                           athlete_name=session.get('athlete_name', ''),
                            activity=sess['activity'],
                            summary=sess['summary'],
                            results=sess['results'],

@@ -322,6 +322,9 @@ def find_fastest_intervals(
             sub_splits=sub_splits,
         ))
 
+    # Sort by start time (chronological) before returning
+    results.sort(key=lambda r: r.start_time_seconds)
+
     return results
 
 
