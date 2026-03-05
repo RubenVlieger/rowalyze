@@ -41,9 +41,27 @@
 </div>
 {% else %}
 
+{% if past_analyses %}
+<div class="card recent-card">
+    <h2 class="section-title">Past Analyses</h2>
+    <div class="recent-list" style="margin-bottom: 10px;">
+        {% for act in past_analyses %}
+        <a href="{{ url_for('view_results', session_id=act.id) }}" class="recent-item" style="text-decoration: none;">
+            <div class="recent-info">
+                <span class="recent-name">{{ act.activity_name }}</span>
+                <span class="recent-meta">{{ act.formatted_date }} · {% if act.total_distance %}{{
+                    "{:,.0f}".format(act.total_distance) }}m{% else %}N/A{% endif %}</span>
+            </div>
+            <span class="recent-arrow">→</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% if recent_activities %}
 <div class="card recent-card">
-    <h2 class="section-title">Recent Sessions</h2>
+    <h2 class="section-title">Recent Strava Sessions</h2>
     <div class="recent-list">
         {% for act in recent_activities %}
         <button type="button" class="recent-item" onclick="selectActivity('{{ act.url }}')">

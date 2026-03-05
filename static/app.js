@@ -493,14 +493,21 @@ function initStatsChart(data) {
 
     // Fill in missing dates between first data point and today
     const filled = [];
-    const start = new Date(data[0].date);
+
+    // Parse the first date correctly without timezone shift
+    const startParts = data[0].date.split('-');
+    const start = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const dateMap = {};
     data.forEach(d => dateMap[d.date] = d.count);
 
     for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
-        const key = d.toISOString().slice(0, 10);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const key = `${yyyy}-${mm}-${dd}`;
         filled.push({ date: key, count: dateMap[key] || 0 });
     }
 

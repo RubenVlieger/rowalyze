@@ -343,7 +343,8 @@ def get_user_sessions(user_hash: str, limit: int = 50) -> list[dict]:
     """Get recent sessions for a user."""
     conn = _get_db()
     rows = conn.execute("""
-        SELECT id, activity_name, activity_date, interval_desc, created_at, is_shark
+        SELECT id, activity_name, activity_date, interval_desc, created_at, is_shark,
+               json_extract(summary_json, '$.total_distance_meters') as total_distance
         FROM sessions WHERE user_hash = ?
         ORDER BY created_at DESC LIMIT ?
     """, (user_hash, limit)).fetchall()

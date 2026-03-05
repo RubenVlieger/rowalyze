@@ -200,8 +200,20 @@ def index():
     stats = db.get_stats()
     groups = []
     recent_activities = []
+    past_analyses = []
     if authenticated and _get_user_hash():
         groups = db.get_user_groups(_get_user_hash())
+        # Fetch user's own past analyzed sessions
+        raw_analyses = db.get_user_sessions(_get_user_hash(), limit=10)
+        for s in raw_analyses:
+            try:
+                # Assuming activity_date is "YYYY-MM-DD" or similar
+                dt = datetime.fromisoformat(s['activity_date'][:10])
+                s['formatted_date'] = dt.strftime('%A, %b %d, %Y')
+            except Exception:
+                s['formatted_date'] = s['activity_date']
+            past_analyses.append(s)
+
         # Fetch recent rowing activities from Strava
         try:
             token_data = session.get('strava_token', {})
@@ -222,7 +234,8 @@ def index():
                            athlete_name=athlete,
                            stats=stats,
                            groups=groups,
-                           recent_activities=recent_activities)
+                           recent_activities=recent_activities,
+                           past_analyses=past_analyses)
 
 
 @app.route('/auth/strava')
