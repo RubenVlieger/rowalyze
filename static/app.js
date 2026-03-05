@@ -356,6 +356,21 @@ function initSharkModal() {
 
     if (!btn || !modal) return;
 
+    // Detect mobile and toggle visibility
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const desktopMethod = document.getElementById('shark-desktop-method');
+    const mobileMethod = document.getElementById('shark-mobile-method');
+
+    if (desktopMethod && mobileMethod) {
+        if (isMobile) {
+            desktopMethod.style.display = 'none';
+            mobileMethod.style.display = 'block';
+        } else {
+            desktopMethod.style.display = 'block';
+            mobileMethod.style.display = 'none';
+        }
+    }
+
     // Generate self-contained bookmarklet that shows its own config dialog on Strava
     if (bookmarklet) {
         const serverUrl = window.location.origin;
