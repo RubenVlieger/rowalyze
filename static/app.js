@@ -413,6 +413,78 @@ function initWindMap(speedKn, directionDeg, lat, lng) {
 }
 
 
+// ─── Activity Map (Polyline) ───────────────────────────────────
+
+function decodePolyline(encoded) {
+    if (!encoded) return [];
+    var poly = [];
+    var index = 0, len = encoded.length;
+    var lat = 0, lng = 0;
+
+    while (index < len) {
+        var b, shift = 0, result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
+
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
+
+        poly.push([lat * 1e-5, lng * 1e-5]);
+    }
+    return poly;
+}
+
+function initActivityMap(polylineStr) {
+    const container = document.getElementById('activity-map');
+    if (!container || typeof L === 'undefined' || !polylineStr) return;
+
+    const coords = decodePolyline(polylineStr);
+    if (!coords || coords.length === 0) return;
+
+    const map = L.map(container, {
+        zoomControl: false,
+        attributionControl: false,
+        scrollWheelZoom: false,
+        touchZoom: false,
+        dragging: false,
+        doubleClickZoom: false
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    const routeLine = L.polyline(coords, {
+        color: '#fc4c02',
+        weight: 4,
+        opacity: 0.8,
+        lineJoin: 'round'
+    }).addTo(map);
+
+    L.circleMarker(coords[0], {
+        radius: 5, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 1
+    }).addTo(map);
+
+    L.circleMarker(coords[coords.length - 1], {
+        radius: 5, fillColor: '#111', color: '#fff', weight: 2, fillOpacity: 1
+    }).addTo(map);
+
+    map.fitBounds(routeLine.getBounds(), { padding: [15, 15] });
+}
+
+
 // ─── Stats Chart (Homepage) ────────────────────────────────────
 
 function initStatsChart(data) {

@@ -334,6 +334,7 @@ def analyze():
         'date': details.get('start_date_local', '')[:10],
         'type': details.get('type', 'Rowing'),
         'url': f'https://www.strava.com/activities/{activity_id}',
+        'polyline': details.get('map', {}).get('summary_polyline'),
     }
 
     # Fetch wind data for activity date
@@ -640,6 +641,7 @@ def shark_analyze():
         'date': activity_info.get('date', ''),
         'type': 'Rowing',
         'url': activity_info.get('url', '#'),
+        'polyline': activity_info.get('polyline'),
     }
 
     # Fetch wind data
@@ -763,6 +765,7 @@ def shark_receive():
         'date': today,
         'type': 'Rowing',
         'url': activity_url or '#',
+        'polyline': None,
     }
 
     results_dicts = [r.to_dict() for r in results]

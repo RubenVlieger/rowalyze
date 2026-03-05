@@ -55,10 +55,9 @@
         </div>
     </div>
 
-    {% if activity_id and activity_id != 'shark' %}
+    {% if activity.polyline %}
     <div class="results-top-map">
-        <div class="strava-embed-placeholder" data-embed-type="activity" data-embed-id="{{ activity_id }}"
-            data-style="standard" data-from-embed="false"></div>
+        <div id="activity-map" class="activity-map-container" style="height: 100%; min-height: 160px;"></div>
     </div>
     {% endif %}
 </div>
@@ -255,7 +254,9 @@
     const chartData = {{ chart_data | tojson }};
     initCharts(chartData);
 </script>
-{% if activity_id and activity_id != 'shark' %}
-<script src="https://strava-embeds.com/embed.js"></script>
+{% if activity.polyline %}
+<script>
+    initActivityMap({{ activity.polyline | tojson }});
+</script>
 {% endif %}
 {% endblock %}
