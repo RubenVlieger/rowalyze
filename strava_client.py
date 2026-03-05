@@ -180,7 +180,7 @@ def get_access_token(client_id: str, client_secret: str) -> str:
 
 # ─── API Calls ──────────────────────────────────────────────────────
 
-def fetch_recent_activities(access_token: str, per_page: int = 10) -> list[dict]:
+def fetch_recent_activities(access_token: str, per_page: int = 30) -> list[dict]:
     """Fetch recent activities from Strava, returning rowing-type activities."""
     resp = requests.get(
         f"{STRAVA_API_BASE}/athlete/activities",
@@ -191,16 +191,23 @@ def fetch_recent_activities(access_token: str, per_page: int = 10) -> list[dict]
     activities = resp.json()
     # Filter to rowing activities and return compact data
     result = []
+    from datetime import datetime
     for a in activities:
         if a.get('type') in ('Rowing', 'VirtualRowing'):
+            raw_date = (a.get('start_date_local', '') or '')[:10]
+            try:
+                dt = datetime.fromisoformat(raw_date)
+                formatted_date = dt.strftime('%A, %b %d, %Y')
+            except Exception:
+                formatted_date = raw_date
             result.append({
                 'id': a['id'],
                 'name': a.get('name', 'Untitled'),
                 'distance': round(a.get('distance', 0)),
-                'date': (a.get('start_date_local', '') or '')[:10],
+                'date': formatted_date,
                 'url': f"https://www.strava.com/activities/{a['id']}",
             })
-    return result[:5]  # Return max 5
+    return result[:15]  # Return max 15
 
 
 def fetch_activity_details(access_token: str, activity_id: str) -> dict:

@@ -41,43 +41,14 @@
 </div>
 {% else %}
 
-{% if past_analyses %}
-<div class="card recent-card" style="padding-top: 16px; padding-bottom: 16px;">
-    <button class="dropdown-header"
-        onclick="document.getElementById('past-list').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('up');"
-        style="width:100%; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; padding:8px 0;">
-        <h2 class="section-title" style="margin:0;">Past Analyses</h2>
-        <span class="chevron"
-            style="font-size:1.2rem; transition:transform 0.2s; color:var(--color-text-muted);">▾</span>
-    </button>
-    <div id="past-list" class="recent-list hidden" style="margin-top: 16px;">
-        {% for act in past_analyses %}
-        <button type="button" class="recent-item"
-            onclick='openAnalyzeModal("{{ act.activity_url }}", {{ act.activity_name | tojson }})'>
-            <div class="recent-info">
-                <span class="recent-name">{{ act.activity_name }}</span>
-                <span class="recent-meta">{{ act.formatted_date }} · {% if act.total_distance %}{{
-                    "{:,.0f}".format(act.total_distance) }}m{% else %}N/A{% endif %}</span>
-            </div>
-            <span class="recent-arrow">→</span>
-        </button>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
 {% if recent_activities %}
 <div class="card recent-card" style="padding-top: 16px; padding-bottom: 16px;">
-    <button class="dropdown-header"
-        onclick="document.getElementById('recent-list').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('up');"
-        style="width:100%; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; padding:8px 0;">
-        <h2 class="section-title" style="margin:0;">Recent Strava Sessions</h2>
-        <span class="chevron"
-            style="font-size:1.2rem; transition:transform 0.2s; color:var(--color-text-muted);">▾</span>
-    </button>
-    <div id="recent-list" class="recent-list hidden" style="margin-top: 16px;">
+    <h2 class="section-title" style="margin-left: 16px;">Past Activities</h2>
+    <div id="recent-list" class="recent-list" style="margin-top: 16px;">
         {% for act in recent_activities %}
-        <button type="button" class="recent-item" onclick='openAnalyzeModal("{{ act.url }}", {{ act.name | tojson }})'>
+        <button type="button" class="recent-item"
+            onclick="openAnalyzeModal('{{ act.url }}', '{{ act.name | replace('\'', '\\\'') | replace('\"', ' &quot;')
+            }}')">
             <div class="recent-info">
                 <span class="recent-name">{{ act.name }}</span>
                 <span class="recent-meta">{{ act.date }} · {{ "{:,.0f}".format(act.distance) }}m</span>
